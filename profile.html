@@ -1,422 +1,400 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile | EduStream</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' };
-        if (localStorage.getItem('theme') === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        
-        .profile-gradient {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile | EduStream</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
+        
+        .profile-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
 
-        .cover-image-container {
-            position: relative;
-            height: 160px;
-            background: #0f172a;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .cover-image-container {
+            position: relative;
+            height: 160px;
+            background: #0f172a;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        .cover-text {
-            font-size: 4rem;
-            font-weight: 900;
-            color: rgba(255, 255, 255, 0.1);
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            user-select: none;
-            pointer-events: none;
-            white-space: nowrap;
-        }
+        .cover-text {
+            font-size: 4rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            user-select: none;
+            pointer-events: none;
+            white-space: nowrap;
+        }
 
-        .cover-overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, transparent 0%, rgba(15, 23, 42, 0.4) 100%);
-        }
+        .cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 0%, rgba(15, 23, 42, 0.4) 100%);
+        }
 
-        .edustream-bg {
-            background-color: #0f172a;
-            background-image: 
-                radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0),
-                linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95));
-            background-size: 40px 40px, 100% 100%;
-            position: relative;
-            overflow-x: hidden;
-        }
+        .edustream-bg {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.05) 1px, transparent 0),
+                linear-gradient(to bottom, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95));
+            background-size: 40px 40px, 100% 100%;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-        .edustream-bg::before {
-            content: "EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM";
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-15deg);
-            font-size: 12vw;
-            font-weight: 900;
-            color: rgba(16, 185, 129, 0.03);
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 0;
-            letter-spacing: 0.5rem;
-            line-height: 0.8;
-            user-select: none;
-        }
+        .edustream-bg::before {
+            content: "EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM EDUSTREAM";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 12vw;
+            font-weight: 900;
+            color: rgba(16, 185, 129, 0.03);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 0.5rem;
+            line-height: 0.8;
+            user-select: none;
+        }
 
-        .content-layer {
-            position: relative;
-            z-index: 10;
-        }
+        .content-layer {
+            position: relative;
+            z-index: 10;
+        }
 
-        input:disabled, select:disabled, textarea:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-    </style>
+        input:disabled, select:disabled, textarea:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="edustream-bg min-h-screen text-slate-900 dark:text-slate-100">
 
-    <div class="content-layer min-h-screen">
-        <!-- Navigation -->
-        <nav class="border-b border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-50">
-            <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-2 font-bold text-xl text-emerald-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4,11.6l-8.4-11C12.7,0.2,12.3,0,12,0s-0.7,0.2-1,0.6l-8.4,11c-0.4,0.5-0.4,1.1-0.1,1.6c0.3,0.5,0.8,0.8,1.4,0.8h4.2l-1.5,9.2 c-0.1,0.4,0.1,0.8,0.4,1.1c0.3,0.3,0.7,0.4,1.1,0.2l11-7c0.4-0.3,0.6-0.7,0.6-1.1s-0.2-0.8-0.5-1.1L15.3,10h4.6 c0.6,0,1.1-0.3,1.4-0.8C21.7,12.7,21.7,12.1,21.4,11.6z"/></svg>
-                    <span>EduStream</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <a href="dashboard.html" class="text-sm font-medium hover:text-emerald-500 transition-colors">Dashboard</a>
-                    <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Logout</button>
-                </div>
-            </div>
-        </nav>
+    <div class="content-layer min-h-screen">
+        <nav class="border-b border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-6 py-4 sticky top-0 z-50">
+            <div class="max-w-5xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-2 font-bold text-xl text-emerald-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M21.4,11.6l-8.4-11C12.7,0.2,12.3,0,12,0s-0.7,0.2-1,0.6l-8.4,11c-0.4,0.5-0.4,1.1-0.1,1.6c0.3,0.5,0.8,0.8,1.4,0.8h4.2l-1.5,9.2 c-0.1,0.4,0.1,0.8,0.4,1.1c0.3,0.3,0.7,0.4,1.1,0.2l11-7c0.4-0.3,0.6-0.7,0.6-1.1s-0.2-0.8-0.5-1.1L15.3,10h4.6 c0.6,0,1.1-0.3,1.4-0.8C21.7,12.7,21.7,12.1,21.4,11.6z"/></svg>
+                    <span>EduStream</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="dashboard.html" class="text-sm font-medium hover:text-emerald-500 transition-colors">Dashboard</a>
+                    <button id="logout-btn" class="text-sm font-medium text-red-500 hover:text-red-600 transition-colors">Logout</button>
+                </div>
+            </div>
+        </nav>
 
-        <main class="max-w-3xl mx-auto py-12 px-6">
-            <div id="alert-box" class="hidden mb-6 p-4 rounded-lg text-sm shadow-lg"></div>
+        <main class="max-w-3xl mx-auto py-12 px-6">
+            <div id="alert-box" class="hidden mb-6 p-4 rounded-lg text-sm shadow-lg"></div>
 
-            <!-- Profile Card -->
-            <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden mb-8 transition-transform hover:scale-[1.01]">
-                <div class="cover-image-container profile-gradient">
-                    <div class="cover-text">EduStream</div>
-                    <div class="cover-overlay"></div>
-                    <div class="absolute -bottom-12 left-8">
-                        <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-900 flex items-center justify-center text-emerald-600 shadow-xl">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="pt-16 pb-8 px-8">
-                    <h1 id="display-name" class="text-2xl font-bold text-slate-900 dark:text-white">Loading...</h1>
-                    <p id="display-email" class="text-slate-500 dark:text-slate-400">Please wait while we fetch your details</p>
-                    <div id="lock-badge" class="hidden mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
-                        Profile Verified & Locked
-                    </div>
-                </div>
-            </div>
+            <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-800/50 overflow-hidden mb-8 transition-transform hover:scale-[1.01]">
+                <div class="cover-image-container profile-gradient">
+                    <div class="cover-text">EduStream</div>
+                    <div class="cover-overlay"></div>
+                    <div class="absolute -bottom-12 left-8">
+                        <div class="w-24 h-24 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-900 flex items-center justify-center text-emerald-600 shadow-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-16 pb-8 px-8">
+                    <h1 id="display-name" class="text-2xl font-bold text-slate-900 dark:text-white">Loading...</h1>
+                    <p id="display-email" class="text-slate-500 dark:text-slate-400">Please wait while we fetch your details</p>
+                    <div id="lock-badge" class="hidden mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-900/30 text-[10px] uppercase font-bold tracking-wider text-emerald-600 dark:text-emerald-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                        Profile Verified & Locked
+                    </div>
+                </div>
+            </div>
 
-            <!-- Form Section -->
-            <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-800/50 p-8">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 11-2 0V3a1 1 0 00-1-1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2h-3zM1 9a1 1 0 011-1h16a1 1 0 110 2H2a1 1 0 01-1-1z" clip-rule="evenodd" />
-                    </svg>
-                    Student Information
-                </h2>
-                
-                <form id="profile-form" class="space-y-6">
-                    <input type="hidden" id="user_uuid">
+            <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-slate-200/50 dark:border-slate-800/50 p-8">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 00-1 1v1a1 1 0 11-2 0V3a1 1 0 00-1-1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2h-3zM1 9a1 1 0 011-1h16a1 1 0 110 2H2a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Student Information
+                </h2>
+                
+                <form id="profile-form" class="space-y-6">
+                    <input type="hidden" id="user_uuid">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
-                            <input type="text" id="full_name" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
-                            <input type="tel" id="phone" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+                            <input type="text" id="full_name" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+                            <input type="tel" id="phone" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                        </div>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">District</label>
-                            <select id="district" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
-                                <option value="" disabled selected>Select District</option>
-                                <option value="Ampara">Ampara</option>
-                                <option value="Anuradhapura">Anuradhapura</option>
-                                <option value="Badulla">Badulla</option>
-                                <option value="Batticaloa">Batticaloa</option>
-                                <option value="Colombo">Colombo</option>
-                                <option value="Galle">Galle</option>
-                                <option value="Gampaha">Gampaha</option>
-                                <option value="Hambantota">Hambantota</option>
-                                <option value="Jaffna">Jaffna</option>
-                                <option value="Kalutara">Kalutara</option>
-                                <option value="Kandy">Kandy</option>
-                                <option value="Kegalle">Kegalle</option>
-                                <option value="Kilinochchi">Kilinochchi</option>
-                                <option value="Kurunegala">Kurunegala</option>
-                                <option value="Mannar">Mannar</option>
-                                <option value="Matale">Matale</option>
-                                <option value="Matara">Matara</option>
-                                <option value="Moneragala">Moneragala</option>
-                                <option value="Mullaitivu">Mullaitivu</option>
-                                <option value="Nuwara Eliya">Nuwara Eliya</option>
-                                <option value="Polonnaruwa">Polonnaruwa</option>
-                                <option value="Puttalam">Puttalam</option>
-                                <option value="Ratnapura">Ratnapura</option>
-                                <option value="Trincomalee">Trincomalee</option>
-                                <option value="Vavuniya">Vavuniya</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email (Read-only)</label>
-                            <input type="email" id="email" disabled class="w-full px-4 py-2 border dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-500 rounded-lg cursor-not-allowed">
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">District</label>
+                            <select id="district" required class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                                <option value="" disabled selected>Select District</option>
+                                <option value="Ampara">Ampara</option>
+                                <option value="Anuradhapura">Anuradhapura</option>
+                                <option value="Badulla">Badulla</option>
+                                <option value="Batticaloa">Batticaloa</option>
+                                <option value="Colombo">Colombo</option>
+                                <option value="Galle">Galle</option>
+                                <option value="Gampaha">Gampaha</option>
+                                <option value="Hambantota">Hambantota</option>
+                                <option value="Jaffna">Jaffna</option>
+                                <option value="Kalutara">Kalutara</option>
+                                <option value="Kandy">Kandy</option>
+                                <option value="Kegalle">Kegalle</option>
+                                <option value="Kilinochchi">Kilinochchi</option>
+                                <option value="Kurunegala">Kurunegala</option>
+                                <option value="Mannar">Mannar</option>
+                                <option value="Matale">Matale</option>
+                                <option value="Matara">Matara</option>
+                                <option value="Moneragala">Moneragala</option>
+                                <option value="Mullaitivu">Mullaitivu</option>
+                                <option value="Nuwara Eliya">Nuwara Eliya</option>
+                                <option value="Polonnaruwa">Polonnaruwa</option>
+                                <option value="Puttalam">Puttalam</option>
+                                <option value="Ratnapura">Ratnapura</option>
+                                <option value="Trincomalee">Trincomalee</option>
+                                <option value="Vavuniya">Vavuniya</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email (Read-only)</label>
+                            <input type="email" id="email" disabled class="w-full px-4 py-2 border dark:border-slate-700 bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-500 rounded-lg cursor-not-allowed">
+                        </div>
+                    </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Address</label>
-                        <textarea id="address" required rows="3" class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
-                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Address</label>
+                        <textarea id="address" required rows="3" class="w-full px-4 py-2 border dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition resize-none"></textarea>
+                    </div>
 
-                    <div class="pt-4 flex flex-col md:flex-row items-start md:items-center justify-between border-t border-slate-200 dark:border-slate-800 gap-4">
-                        <div class="space-y-1">
-                            <p class="text-xs text-slate-500">Last login: <span id="last-login">N/A</span></p>
-                            <p id="lock-notice" class="hidden text-xs text-amber-500 font-medium">Note: Information is locked and cannot be changed.</p>
-                        </div>
-                        <button type="submit" id="save-btn" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-2 rounded-lg transition duration-200 shadow-lg shadow-emerald-500/20 disabled:bg-slate-400 disabled:shadow-none disabled:cursor-not-allowed">
-                            Submit & Lock
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <div class="pt-4 flex flex-col md:flex-row items-start md:items-center justify-between border-t border-slate-200 dark:border-slate-800 gap-4">
+                        <div class="space-y-1">
+                            <p class="text-xs text-slate-500">Last login: <span id="last-login">N/A</span></p>
+                            <p id="lock-notice" class="hidden text-xs text-amber-500 font-medium">Note: Information is locked and cannot be changed.</p>
+                        </div>
+                        <button type="submit" id="save-btn" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-2 rounded-lg transition duration-200 shadow-lg shadow-emerald-500/20 disabled:bg-slate-400 disabled:shadow-none disabled:cursor-not-allowed">
+                            Submit & Lock
+                        </button>
+                    </div>
+                </form>
+            </div>
 
-            <div class="mt-8 text-center">
-                <button id="theme-toggle" class="text-xs text-slate-500 hover:text-emerald-500 flex items-center gap-1 mx-auto transition-colors">
-                    <span id="theme-text">Toggle Light Mode</span>
-                </button>
-            </div>
-        </main>
-    </div>
+            <div class="mt-8 text-center">
+                <button id="theme-toggle" class="text-xs text-slate-500 hover:text-emerald-500 flex items-center gap-1 mx-auto transition-colors">
+                    <span id="theme-text">Toggle Light Mode</span>
+                </button>
+            </div>
+        </main>
+    </div>
 
-    <!-- Scripts -->
-    <script src="supabase.js"></script>
-    <script>
-        // Supabase Initialization (Replace CONFIG values with your actual keys if they are in supabase.js)
-        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    <script src="supabase.js"></script>
+    <script>
+    
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
 
-        let currentUser = null;
+        let currentUser = null;
 
-        /**
-         * Loads profile data from the 'profiles' table.
-         * Falls back to Auth Metadata if no record exists.
-         */
-        async function loadProfile() {
-            try {
-                const { data: { user }, error } = await supabaseClient.auth.getUser();
+        async function loadProfile() {
+            try {
+                const { data: { user }, error } = await supabaseClient.auth.getUser();
 
-                if (error || !user) {
-                    console.warn("Unauthorized access");
-                    showAlert("Authentication required. Please sign in.");
-                    return;
-                }
-                
-                currentUser = user;
-                document.getElementById('user_uuid').value = user.id;
+                if (error || !user) {
+                    console.warn("Unauthorized access - Redirecting to login (simulated)");
+                    showAlert("Authentication required. Please sign in.");
+                    return;
+                }
+                
+                currentUser = user;
+                document.getElementById('user_uuid').value = user.id;
 
-                // Priority: Fetch data from 'profiles' table (Updated from 'students')
-                const { data: profileRecord, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .maybeSingle();
+                // Priority: Fetch data from 'students' table first
+                const { data: studentRecord, error: studentError } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
 
-                const metadata = user.user_metadata || {};
-                
-                // Map fields from profileRecord if it exists, otherwise use auth metadata
-                const name = profileRecord?.full_name || metadata.full_name || '';
-                const phone = profileRecord?.phone || profileRecord?.phone_number || metadata.phone_number || '';
-                const district = profileRecord?.district || metadata.district || '';
-                const address = profileRecord?.address || metadata.address || '';
-                const email = user.email || '';
+                const metadata = user.user_metadata || {};
+                
+                // Map fields from studentRecord if it exists, otherwise use auth metadata
+                const name = studentRecord?.full_name || metadata.full_name || '';
+                const phone = studentRecord?.phone_number || metadata.phone_number || '';
+                const district = studentRecord?.district || metadata.district || '';
+                const address = studentRecord?.address || metadata.address || '';
+                const email = user.email || '';
 
-                // Populate UI
-                document.getElementById('display-name').textContent = name || 'EduStream Student';
-                document.getElementById('display-email').textContent = email;
-                document.getElementById('full_name').value = name;
-                document.getElementById('phone').value = phone;
-                document.getElementById('district').value = district;
-                document.getElementById('address').value = address;
-                document.getElementById('email').value = email;
-                
-                const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A';
-                document.getElementById('last-login').textContent = lastSignIn;
+                // Populate UI
+                document.getElementById('display-name').textContent = name || 'EduStream Student';
+                document.getElementById('display-email').textContent = email;
+                document.getElementById('full_name').value = name;
+                document.getElementById('phone').value = phone;
+                document.getElementById('district').value = district;
+                document.getElementById('address').value = address;
+                document.getElementById('email').value = email;
+                
+                const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'N/A';
+                document.getElementById('last-login').textContent = lastSignIn;
 
-                // AUTO-LOCK LOGIC: Lock the form if a record already exists in the 'profiles' table
-                // This ensures students can only submit their data once.
-                if (profileRecord && profileRecord.full_name && (profileRecord.phone || profileRecord.phone_number)) {
-                    lockForm();
-                }
-            } catch (err) {
-                console.error('Error loading profile:', err);
-                showAlert('Failed to load profile data.');
-            }
-        }
+                // AUTO-LOCK LOGIC: Lock the form if a record already exists in the 'students' table
+                if (studentRecord && studentRecord.full_name && studentRecord.phone_number) {
+                    lockForm();
+                }
+            } catch (err) {
+                console.error('Error loading profile:', err);
+                showAlert('Failed to load profile data.');
+            }
+        }
 
-        /**
-         * Disables all inputs and updates UI to show "Locked" state
-         */
-        function lockForm() {
-            const form = document.getElementById('profile-form');
-            const inputs = form.querySelectorAll('input:not(#email), select, textarea');
-            const saveBtn = document.getElementById('save-btn');
-            const lockBadge = document.getElementById('lock-badge');
-            const lockNotice = document.getElementById('lock-notice');
+        function lockForm() {
+            const form = document.getElementById('profile-form');
+            const inputs = form.querySelectorAll('input:not(#email), select, textarea');
+            const saveBtn = document.getElementById('save-btn');
+            const lockBadge = document.getElementById('lock-badge');
+            const lockNotice = document.getElementById('lock-notice');
 
-            inputs.forEach(input => {
-                input.disabled = true;
-                input.classList.add('cursor-not-allowed', 'opacity-70');
-            });
-            
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Profile Locked';
-            saveBtn.classList.replace('bg-emerald-600', 'bg-slate-400');
-            saveBtn.classList.replace('hover:bg-emerald-700', 'hover:bg-slate-400');
-            
-            lockBadge.classList.remove('hidden');
-            lockNotice.classList.remove('hidden');
-        }
+            inputs.forEach(input => {
+                input.disabled = true;
+                input.classList.add('cursor-not-allowed', 'opacity-70');
+            });
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Profile Locked';
+            saveBtn.classList.replace('bg-emerald-600', 'bg-slate-400');
+            saveBtn.classList.replace('hover:bg-emerald-700', 'hover:bg-slate-400');
+            
+            lockBadge.classList.remove('hidden');
+            lockNotice.classList.remove('hidden');
+        }
 
-        /**
-         * Form Submission handler
-         */
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            let sessionData;
-            try {
-                const { data } = await supabaseClient.auth.getSession();
-                sessionData = data;
-            } catch (err) {
-                console.error("Session check failed", err);
-            }
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            let sessionData;
+            try {
+                const { data } = await supabaseClient.auth.getSession();
+                sessionData = data;
+            } catch (err) {
+                console.error("Session check failed", err);
+            }
 
-            if (!sessionData || !sessionData.session) {
-                showAlert('Session expired. Please log in again.');
-                return;
-            }
+            if (!sessionData || !sessionData.session) {
+                showAlert('Session expired. Please log in again.');
+                return;
+            }
 
-            const userId = sessionData.session.user.id;
-            const saveBtn = document.getElementById('save-btn');
-            const fullName = document.getElementById('full_name').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const district = document.getElementById('district').value;
-            const address = document.getElementById('address').value.trim();
+            const userId = sessionData.session.user.id;
+            const saveBtn = document.getElementById('save-btn');
+            const fullName = document.getElementById('full_name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const district = document.getElementById('district').value;
+            const address = document.getElementById('address').value.trim();
 
-            if (!fullName || !phone || !district || !address) {
-                showAlert('Please fill in all required fields.');
-                return;
-            }
+            if (!fullName || !phone || !district || !address) {
+                showAlert('Please fill in all required fields.');
+                return;
+            }
 
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Locking Profile...';
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Locking Profile...';
 
-            try {
-                // Upsert into 'profiles' table (Updated from 'students')
-                // Note: We use 'id' as primary key for 'profiles'
-                const { error: dbError } = await supabaseClient
-                    .from('profiles')
-                    .upsert([{
-                        id: userId,
-                        full_name: fullName,
-                        phone: phone, // Common naming convention in 'profiles'
-                        district: district,
-                        address: address,
-                        updated_at: new Date().toISOString()
-                    }]);
+            try {
+                // Upsert into students table
+                const { error: dbError } = await supabaseClient
+                    .from('students')
+                    .upsert([{
+                        id: userId,
+                        full_name: fullName,
+                        phone_number: phone,
+                        district: district,
+                        address: address,
+                        email: sessionData.session.user.email
+                    }]);
 
-                if (dbError) throw dbError;
+                if (dbError) throw dbError;
 
-                // Optional: Sync with auth metadata for redundancy
-                await supabaseClient.auth.updateUser({
-                    data: { 
-                        full_name: fullName,
-                        phone_number: phone,
-                        district: district,
-                        address: address
-                    }
-                });
+                // Sync with auth metadata for redundancy
+                await supabaseClient.auth.updateUser({
+                    data: { 
+                        full_name: fullName,
+                        phone_number: phone,
+                        district: district,
+                        address: address
+                    }
+                });
 
-                showAlert('Profile information saved and locked!', 'success');
-                document.getElementById('display-name').textContent = fullName;
-                lockForm();
+                showAlert('Profile information saved and locked!', 'success');
+                document.getElementById('display-name').textContent = fullName;
+                lockForm();
 
-            } catch (err) {
-                console.error('Submission error:', err);
-                showAlert(err.message || 'Failed to submit profile.');
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Submit & Lock';
-            }
-        });
+            } catch (err) {
+                console.error('Submission error:', err);
+                showAlert(err.message || 'Failed to submit profile.');
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Submit & Lock';
+            }
+        });
 
-        // Logout listener
-        document.getElementById('logout-btn').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'index.html'; // Adjust redirect as needed
-        });
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            showAlert('Logged out successfully.', 'success');
+        });
 
-        // Theme Toggle logic
-        const themeBtn = document.getElementById('theme-toggle');
-        const themeText = document.getElementById('theme-text');
-        
-        function updateThemeUI() {
-            const isDark = document.documentElement.classList.contains('dark');
-            themeText.textContent = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-        }
+        const themeBtn = document.getElementById('theme-toggle');
+        const themeText = document.getElementById('theme-text');
+        
+        function updateThemeUI() {
+            const isDark = document.documentElement.classList.contains('dark');
+            themeText.textContent = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+        }
 
-        themeBtn.addEventListener('click', () => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            updateThemeUI();
-        });
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateThemeUI();
+        });
 
-        /**
-         * UI Helper for alerts
-         */
-        function showAlert(msg, type = 'error') {
-            const box = document.getElementById('alert-box');
-            if (!box) return;
-            box.textContent = msg;
-            box.classList.remove('hidden');
-            if (type === 'success') {
-                box.className = "mb-6 p-4 rounded-lg text-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-            } else {
-                box.className = "mb-6 p-4 rounded-lg text-sm bg-red-500/10 text-red-400 border border-red-500/20";
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            setTimeout(() => box.classList.add('hidden'), 5000);
-        }
+        function showAlert(msg, type = 'error') {
+            const box = document.getElementById('alert-box');
+            if (!box) return;
+            box.textContent = msg;
+            box.classList.remove('hidden');
+            if (type === 'success') {
+                box.className = "mb-6 p-4 rounded-lg text-sm bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            } else {
+                box.className = "mb-6 p-4 rounded-lg text-sm bg-red-500/10 text-red-400 border border-red-500/20";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => box.classList.add('hidden'), 5000);
+        }
 
-        // Initialize
-        updateThemeUI();
-        loadProfile();
-    </script>
+        updateThemeUI();
+        loadProfile();
+    </script>
 </body>
 </html>
