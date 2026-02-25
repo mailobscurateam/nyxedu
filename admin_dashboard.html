@@ -13,9 +13,9 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 
-                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 
-                            800: '#075985', 900: '#0c4a6e',
+                            50: '#f5f7ff', 100: '#ebf0fe', 200: '#ced9fd', 300: '#adc0fb', 
+                            400: '#8da7fa', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 
+                            800: '#3730a3', 900: '#312e81',
                         }
                     }
                 }
@@ -30,7 +30,7 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .active-nav { @apply bg-brand-50 dark:bg-brand-900/20 text-brand-600 font-bold; }
+        .active-nav { @apply bg-brand-600 text-white shadow-lg shadow-brand-600/20; }
         [v-cloak] { display: none; }
     </style>
 </head>
@@ -41,37 +41,37 @@
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
             <a href="#" onclick="switchView('approvals')" class="flex items-center gap-2 overflow-hidden">
                 <div class="w-8 h-8 bg-brand-600 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-black">E</div>
-                <span id="logo-text" class="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tighter whitespace-nowrap">EduStream</span>
+                <span id="logo-text" class="text-xl font-bold text-slate-900 dark:text-white tracking-tighter whitespace-nowrap">EduStream</span>
             </a>
             <button id="toggle-sidebar" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                 <svg id="toggle-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
             </button>
         </div>
 
-        <nav class="flex-grow py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-            <button onclick="switchView('approvals')" id="nav-approvals" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
+        <nav class="flex-grow py-6 px-3 space-y-2 overflow-y-auto custom-scrollbar">
+            <button onclick="switchView('approvals')" id="nav-approvals" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span class="nav-label whitespace-nowrap">Enrollments</span>
             </button>
-            <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
+            <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-                <span class="nav-label whitespace-nowrap">Courses & Lessons</span>
+                <span class="nav-label whitespace-nowrap">Courses</span>
             </button>
-            <button onclick="switchView('users')" id="nav-users" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group">
-                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                <span class="nav-label whitespace-nowrap">Users</span>
+            <button onclick="switchView('users')" id="nav-users" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span class="nav-label whitespace-nowrap">Students</span>
             </button>
         </nav>
 
         <div class="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
-            <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-medium transition-all">
+            <button id="theme-toggle" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl font-medium transition-all">
                 <div class="w-5 h-5 shrink-0 flex items-center justify-center">
                     <svg id="sun-icon" class="w-full h-full hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
                     <svg id="moon-icon" class="w-full h-full hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </div>
                 <span class="nav-label whitespace-nowrap">Appearance</span>
             </button>
-            <button id="logout-btn" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl font-medium transition-all">
+            <button id="logout-btn" class="w-full flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl font-medium transition-all">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                 <span class="nav-label whitespace-nowrap">Sign Out</span>
             </button>
@@ -81,46 +81,53 @@
     <!-- Main Content -->
     <main class="flex-grow p-4 md:p-8 lg:p-12 overflow-x-hidden">
         <div class="max-w-6xl mx-auto">
-            <div class="mb-10 flex justify-between items-end">
+            <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white mb-2">Platform Administration</h1>
-                    <p id="view-desc" class="text-slate-500 dark:text-slate-400">View and manage all course enrollment records.</p>
+                    <h1 id="view-title" class="text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Platform Administration</h1>
+                    <p id="view-desc" class="text-slate-500 dark:text-slate-400 text-lg">Central control for EduStream resources.</p>
+                </div>
+                <div class="flex gap-3">
+                    <button id="add-course-btn" class="hidden px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/25 hover:bg-brand-700 transition transform hover:-translate-y-0.5 active:translate-y-0">
+                        NEW COURSE
+                    </button>
+                    <button id="add-lesson-btn" class="hidden px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/25 hover:bg-brand-700 transition transform hover:-translate-y-0.5">
+                        ADD LESSON
+                    </button>
                 </div>
             </div>
 
             <!-- Stats -->
-            <div id="stats-container" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Pending Approvals</p>
-                    <p id="stat-pending" class="text-3xl font-black text-amber-500">0</p>
+            <div id="stats-container" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Pending Items</p>
+                    <p id="stat-pending" class="text-4xl font-black text-amber-500">0</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Students</p>
-                    <p id="stat-students" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Total Students</p>
+                    <p id="stat-students" class="text-4xl font-black text-slate-900 dark:text-white">--</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Courses</p>
-                    <p id="stat-courses" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Courses Live</p>
+                    <p id="stat-courses" class="text-4xl font-black text-slate-900 dark:text-white">--</p>
                 </div>
-                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Enrollments</p>
-                    <p id="stat-active" class="text-3xl font-black text-emerald-600">--</p>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-2">Revenue</p>
+                    <p id="stat-active" class="text-4xl font-black text-emerald-500">--</p>
                 </div>
             </div>
 
             <!-- Table Card -->
-            <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+            <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none overflow-hidden">
+                <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <button id="back-btn" class="hidden p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-500 hover:text-brand-600">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        <button id="back-btn" class="hidden p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 hover:text-brand-600 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <h2 id="table-title" class="font-bold text-slate-900 dark:text-white flex items-center gap-2">Loading...</h2>
+                        <h2 id="table-title" class="text-xl font-bold text-slate-900 dark:text-white">Loading...</h2>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button id="add-btn" class="hidden px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-700 transition">ADD NEW</button>
-                        <button id="refresh-btn" class="text-xs font-bold text-brand-600 hover:text-brand-700 uppercase tracking-tighter">Refresh</button>
-                    </div>
+                    <button id="refresh-btn" class="p-2 text-slate-400 hover:text-brand-600 transition rotate-hover">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </button>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -130,57 +137,86 @@
                     </table>
                 </div>
 
-                <div id="empty-state" class="hidden py-20 text-center">
-                    <p class="text-slate-500 dark:text-slate-400 font-medium">Nothing found here.</p>
+                <div id="empty-state" class="hidden py-32 text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-300 mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-bold">No records found matching criteria.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Lesson Modal -->
-    <div id="lesson-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
-            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 id="modal-title" class="text-xl font-bold text-slate-900 dark:text-white">Add Lesson</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+    <!-- Modal: Course Editor -->
+    <div id="course-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 id="course-modal-title" class="text-2xl font-black text-slate-900 dark:text-white">Course Details</h3>
+                <button onclick="closeCourseModal()" class="text-slate-400 hover:text-red-500 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-            <form id="lesson-form" class="p-6 space-y-4">
-                <input type="hidden" id="lesson-id">
-                <input type="hidden" id="course-id-field">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Title</label>
-                    <input type="text" id="lesson-title" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-brand-500 transition" placeholder="e.g. Introduction to React">
-                </div>
+            <form id="course-form" class="p-8 space-y-5">
+                <input type="hidden" id="course-id">
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label>
-                        <select id="lesson-type" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-brand-500 transition">
-                            <option value="video">Video</option>
-                            <option value="pdf">Document (PDF)</option>
-                            <option value="quiz">Quiz</option>
-                        </select>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Title</label>
+                        <input type="text" id="c-title" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="Full Stack Web Dev">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Duration</label>
-                        <input type="text" id="lesson-duration" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-brand-500 transition" placeholder="10:00">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Category</label>
+                        <input type="text" id="c-category" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="Development">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Price (LKR)</label>
+                        <input type="number" id="c-price" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="5000">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Thumbnail URL</label>
+                        <input type="url" id="c-thumbnail" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="https://...">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Resource URL (Video ID or Link)</label>
-                    <input type="text" id="lesson-video-url" required class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-brand-500 transition" placeholder="YouTube ID or PDF URL">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description</label>
-                    <textarea id="lesson-desc" rows="3" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-brand-500 transition" placeholder="Brief lesson overview..."></textarea>
-                </div>
-                <button type="submit" class="w-full py-4 bg-brand-600 text-white font-bold rounded-2xl shadow-xl shadow-brand-600/20 hover:bg-brand-700 transition">Save Lesson</button>
+                <button type="submit" class="w-full py-5 bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-600/30 hover:bg-brand-700 transition transform hover:-translate-y-1">SAVE COURSE</button>
             </form>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[110]"></div>
+    <!-- Modal: Lesson Editor -->
+    <div id="lesson-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800">
+            <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 id="lesson-modal-title" class="text-2xl font-black text-slate-900 dark:text-white">Lesson Details</h3>
+                <button onclick="closeLessonModal()" class="text-slate-400 hover:text-red-500 transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+            </div>
+            <form id="lesson-form" class="p-8 space-y-5">
+                <input type="hidden" id="l-id">
+                <input type="hidden" id="l-course-id">
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Lesson Title</label>
+                    <input type="text" id="l-title" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="01. Intro to HTML">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Type</label>
+                        <select id="l-type" class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium">
+                            <option value="video">Video</option>
+                            <option value="pdf">Document</option>
+                            <option value="quiz">Quiz</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Duration</label>
+                        <input type="text" id="l-duration" class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="12:45">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Resource ID/Link</label>
+                    <input type="text" id="l-url" required class="w-full px-5 py-4 bg-slate-50 dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 text-slate-900 dark:text-white font-medium" placeholder="YouTube Video ID or Link">
+                </div>
+                <button type="submit" class="w-full py-5 bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-600/30 hover:bg-brand-700 transition transform hover:-translate-y-1">SAVE LESSON</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-8 right-8 px-8 py-4 bg-slate-900 text-white text-sm font-black rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[110] transform translate-y-4"></div>
 
     <script src="supabase.js"></script>
     <script>
@@ -189,16 +225,13 @@
         let activeCourseId = null;
 
         const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('toggle-sidebar');
-        const logoText = document.getElementById('logo-text');
-        const navLabels = document.querySelectorAll('.nav-label');
+        const adminBody = document.getElementById('admin-body');
         const tableBody = document.getElementById('table-body');
         const tableHead = document.getElementById('table-head');
         const emptyState = document.getElementById('empty-state');
-        const refreshBtn = document.getElementById('refresh-btn');
+        const addCourseBtn = document.getElementById('add-course-btn');
+        const addLessonBtn = document.getElementById('add-lesson-btn');
         const backBtn = document.getElementById('back-btn');
-        const addBtn = document.getElementById('add-btn');
-        const adminBody = document.getElementById('admin-body');
 
         async function checkAdminAccess() {
             try {
@@ -223,9 +256,9 @@
             currentView = view;
             activeCourseId = id;
             
-            // UI Resets
             backBtn.classList.add('hidden');
-            addBtn.classList.add('hidden');
+            addCourseBtn.classList.add('hidden');
+            addLessonBtn.classList.add('hidden');
             document.getElementById('stats-container').classList.remove('hidden');
             
             document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-nav'));
@@ -237,163 +270,189 @@
             const tableTitle = document.getElementById('table-title');
 
             if (view === 'approvals') {
-                title.innerText = "Enrollment Management";
-                desc.innerText = "Complete history of all enrollment requests.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> All Enrollments`;
-                fetchAllEnrollments();
+                title.innerText = "Enrollments";
+                desc.innerText = "Review and process course admission requests.";
+                tableTitle.innerText = "Transaction History";
+                fetchEnrollments();
             } else if (view === 'courses') {
-                title.innerText = "Course Management";
-                desc.innerText = "Monitor and edit available courses and their content.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Catalog List`;
+                title.innerText = "Course Catalog";
+                desc.innerText = "Create and manage your educational content.";
+                tableTitle.innerText = "All Courses";
+                addCourseBtn.classList.remove('hidden');
                 fetchCourses();
             } else if (view === 'users') {
-                title.innerText = "User Directory";
-                desc.innerText = "Manage student accounts and profiles.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Student Database`;
-                fetchUsers();
+                title.innerText = "Students";
+                desc.innerText = "Manage student profiles and registration data.";
+                tableTitle.innerText = "Student Directory";
+                fetchStudents();
             } else if (view === 'lessons') {
-                title.innerText = "Lesson Management";
-                desc.innerText = "Add, edit or delete lessons for this specific course.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Course Lessons`;
+                title.innerText = "Lesson Editor";
+                desc.innerText = "Content organization for the selected course.";
+                tableTitle.innerText = "Curriculum Items";
                 backBtn.classList.remove('hidden');
-                addBtn.classList.remove('hidden');
+                addLessonBtn.classList.remove('hidden');
                 document.getElementById('stats-container').classList.add('hidden');
                 fetchLessons(id);
             }
         }
 
         // --- FETCHERS ---
-        async function fetchAllEnrollments() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Order ID</th><th class="px-6 py-4 font-black">Student</th><th class="px-6 py-4 font-black">Course</th><th class="px-6 py-4 font-black">Status</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
-            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading all records...</td></tr>`;
-            
+        async function fetchEnrollments() {
+            renderLoading(5);
             const { data, error } = await supabaseClient.from('enrollments').select('*, courses(title)').order('created_at', { ascending: false });
-            if (error || !data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+            if (error || !data?.length) { renderEmpty(5); return; }
             
-            emptyState.classList.add('hidden');
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-8 py-4">Transaction</th><th class="px-8 py-4">Student ID</th><th class="px-8 py-4">Course</th><th class="px-8 py-4">Status</th><th class="px-8 py-4 text-right">Actions</th></tr>`;
             tableBody.innerHTML = data.map(row => {
-                const status = row.status?.toLowerCase();
-                const badgeClass = status === 'active' || status === 'approved' ? 'bg-emerald-50 text-emerald-600' : (status === 'pending' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600');
-                const isPending = status === 'pending' || status === 'pending_approval';
-
+                const isPending = row.status === 'pending' || row.status === 'pending_approval';
+                const statusColor = row.status === 'active' ? 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' : (isPending ? 'text-amber-500 bg-amber-50 dark:bg-amber-500/10' : 'text-red-500 bg-red-50 dark:bg-red-500/10');
                 return `
                     <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                        <td class="px-6 py-4 font-mono text-xs font-bold text-slate-400">#${row.order_id || '---'}</td>
-                        <td class="px-6 py-4">
-                            <span class="text-sm font-bold text-slate-900 dark:text-white">${row.user_id.substring(0,8)}...</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm font-medium text-slate-700 dark:text-slate-300">${row.courses?.title || 'Unknown Course'}</div>
-                            <div class="text-[10px] text-slate-400">${new Date(row.created_at).toLocaleDateString()}</div>
-                        </td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-full ${badgeClass} text-[10px] font-black uppercase">${status}</span></td>
-                        <td class="px-6 py-4 text-right">
+                        <td class="px-8 py-5 font-mono text-xs text-slate-400">#${row.order_id || '---'}</td>
+                        <td class="px-8 py-5 text-sm font-bold text-slate-900 dark:text-white">${row.user_id.substring(0,12)}...</td>
+                        <td class="px-8 py-5 text-sm font-medium text-slate-600 dark:text-slate-400">${row.courses?.title}</td>
+                        <td class="px-8 py-5"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${statusColor}">${row.status}</span></td>
+                        <td class="px-8 py-5 text-right">
                             ${isPending ? `
                                 <div class="flex justify-end gap-2">
-                                    <button onclick="updateEnrollStatus('${row.id}', 'active')" class="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>
-                                    <button onclick="updateEnrollStatus('${row.id}', 'rejected')" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                    <button onclick="updateEnrollStatus('${row.id}', 'active')" class="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>
+                                    <button onclick="updateEnrollStatus('${row.id}', 'rejected')" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                                 </div>
-                            ` : '<span class="text-[10px] font-bold italic opacity-30">Processed</span>'}
+                            ` : '<span class="text-slate-300 text-[10px] font-bold">PROCESSED</span>'}
                         </td>
                     </tr>`;
             }).join('');
         }
 
         async function fetchCourses() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Course Info</th><th class="px-6 py-4 font-black">Price</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
-            tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading courses...</td></tr>`;
-            
+            renderLoading(3);
             const { data } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
-            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+            if (!data?.length) { renderEmpty(3); return; }
             
-            emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(course => `
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-8 py-4">Title & Category</th><th class="px-8 py-4">Price</th><th class="px-8 py-4 text-right">Control</th></tr>`;
+            tableBody.innerHTML = data.map(c => `
                 <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                    <td class="px-6 py-4 flex items-center gap-4">
-                        <img src="${course.thumbnail}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
-                        <div>
-                            <div class="font-bold text-sm text-slate-900 dark:text-white">${course.title}</div>
-                            <div class="text-[10px] text-slate-500">${course.category || 'Professional'}</div>
+                    <td class="px-8 py-5">
+                        <div class="flex items-center gap-4">
+                            <img src="${c.thumbnail}" class="w-12 h-12 rounded-xl object-cover bg-slate-100">
+                            <div>
+                                <div class="text-sm font-bold text-slate-900 dark:text-white">${c.title}</div>
+                                <div class="text-[10px] font-black text-brand-600 uppercase tracking-tighter">${c.category}</div>
+                            </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-sm font-bold text-brand-600">Rs. ${parseFloat(course.price).toLocaleString()}</td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="switchView('lessons', '${course.id}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold rounded-lg hover:bg-brand-600 hover:text-white transition">MANAGE LESSONS</button>
+                    <td class="px-8 py-5 text-sm font-black text-slate-900 dark:text-slate-100">Rs. ${parseFloat(c.price).toLocaleString()}</td>
+                    <td class="px-8 py-5 text-right flex justify-end gap-2">
+                        <button onclick='openCourseModal(${JSON.stringify(c)})' class="p-2 text-slate-400 hover:text-brand-600 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
+                        <button onclick="switchView('lessons', '${c.id}')" class="px-4 py-2 bg-slate-50 dark:bg-slate-800 text-[10px] font-black text-slate-600 dark:text-slate-300 rounded-lg hover:bg-brand-600 hover:text-white transition">CURRICULUM</button>
                     </td>
+                </tr>`).join('');
+        }
+
+        async function fetchStudents() {
+            renderLoading(4);
+            // Fetching from the "students" table as requested
+            const { data, error } = await supabaseClient.from('students').select('*').order('created_at', { ascending: false });
+            if (error || !data?.length) { renderEmpty(4); return; }
+
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-8 py-4">Student Name</th><th class="px-8 py-4">Contact</th><th class="px-8 py-4">Joined</th><th class="px-8 py-4 text-right">View</th></tr>`;
+            tableBody.innerHTML = data.map(s => `
+                <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
+                    <td class="px-8 py-5">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">${s.full_name || 'Anonymous Student'}</div>
+                        <div class="text-[10px] font-mono text-slate-400">${s.id}</div>
+                    </td>
+                    <td class="px-8 py-5 text-sm text-slate-600 dark:text-slate-400 font-medium">${s.phone || 'No phone'}</td>
+                    <td class="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase">${new Date(s.created_at).toLocaleDateString()}</td>
+                    <td class="px-8 py-5 text-right"><button class="text-brand-600 text-xs font-black hover:underline">DETAILS</button></td>
                 </tr>`).join('');
         }
 
         async function fetchLessons(courseId) {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Order</th><th class="px-6 py-4 font-black">Lesson Title</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
-            tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading lessons...</td></tr>`;
-            
-            const { data, error } = await supabaseClient.from('lessons').select('*').eq('course_id', courseId).order('created_at', { ascending: true });
-            
-            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
-            emptyState.classList.add('hidden');
-            
-            tableBody.innerHTML = data.map((lesson, index) => `
+            renderLoading(3);
+            const { data } = await supabaseClient.from('lessons').select('*').eq('course_id', courseId).order('created_at', { ascending: true });
+            if (!data?.length) { renderEmpty(3); return; }
+
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase font-black tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-8 py-4">Index</th><th class="px-8 py-4">Content</th><th class="px-8 py-4 text-right">Actions</th></tr>`;
+            tableBody.innerHTML = data.map((l, i) => `
                 <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                    <td class="px-6 py-4 text-xs font-bold text-slate-400">#${index + 1}</td>
-                    <td class="px-6 py-4">
-                        <div class="font-bold text-sm text-slate-900 dark:text-white">${lesson.title}</div>
-                        <div class="text-[10px] text-slate-500">${lesson.lesson_type.toUpperCase()} • ${lesson.duration}</div>
+                    <td class="px-8 py-5 font-black text-slate-300">#${(i+1).toString().padStart(2, '0')}</td>
+                    <td class="px-8 py-5">
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">${l.title}</div>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[10px] font-black px-2 py-0.5 rounded bg-brand-50 text-brand-600 dark:bg-brand-900/30 uppercase tracking-widest">${l.lesson_type}</span>
+                            <span class="text-[10px] text-slate-400 font-bold">${l.duration || '--:--'}</span>
+                        </div>
                     </td>
-                    <td class="px-6 py-4 text-right flex justify-end gap-2">
-                        <button onclick='openEditModal(${JSON.stringify(lesson)})' class="p-2 text-slate-400 hover:text-brand-600 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-                        <button onclick="deleteLesson('${lesson.id}')" class="p-2 text-slate-400 hover:text-red-600 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                    <td class="px-8 py-5 text-right flex justify-end gap-2">
+                        <button onclick='openLessonModal(${JSON.stringify(l)})' class="p-2 text-slate-400 hover:text-brand-600 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                        <button onclick="deleteLesson('${l.id}')" class="p-2 text-slate-400 hover:text-red-500 transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
                     </td>
                 </tr>`).join('');
         }
 
-        async function fetchUsers() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Student Details</th><th class="px-6 py-4 font-black">Role</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
-            tableBody.innerHTML = `<tr><td colspan="3" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading users...</td></tr>`;
-            const { data } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
-            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
-            emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(user => `
-                <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                    <td class="px-6 py-4"><span class="text-sm font-bold text-slate-900 dark:text-white">${user.full_name || 'Student'}</span><br><span class="text-[10px] text-slate-400">${user.id}</span></td>
-                    <td class="px-6 py-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role==='admin'?'bg-brand-50 text-brand-600':'bg-emerald-50 text-emerald-600'} uppercase">${user.role || 'student'}</span></td>
-                    <td class="px-6 py-4 text-right"><button class="text-slate-400 text-xs font-bold hover:text-brand-600 transition">VIEW</button></td>
-                </tr>`).join('');
+        // --- COURSE CRUD ---
+        addCourseBtn.onclick = () => openCourseModal();
+        
+        function openCourseModal(course = null) {
+            document.getElementById('course-modal-title').innerText = course ? "Edit Course" : "Create New Course";
+            document.getElementById('course-id').value = course ? course.id : "";
+            document.getElementById('c-title').value = course ? course.title : "";
+            document.getElementById('c-category').value = course ? course.category : "";
+            document.getElementById('c-price').value = course ? course.price : "";
+            document.getElementById('c-thumbnail').value = course ? course.thumbnail : "";
+            document.getElementById('course-modal').classList.remove('hidden');
         }
 
-        // --- LESSON CRUD ---
-        function openEditModal(lesson) {
-            document.getElementById('modal-title').innerText = "Edit Lesson";
-            document.getElementById('lesson-id').value = lesson.id;
-            document.getElementById('course-id-field').value = lesson.course_id;
-            document.getElementById('lesson-title').value = lesson.title;
-            document.getElementById('lesson-type').value = lesson.lesson_type;
-            document.getElementById('lesson-duration').value = lesson.duration || '';
-            document.getElementById('lesson-video-url').value = lesson.video_url;
-            document.getElementById('lesson-desc').value = lesson.description || '';
-            document.getElementById('lesson-modal').classList.remove('hidden');
-        }
+        function closeCourseModal() { document.getElementById('course-modal').classList.add('hidden'); }
 
-        addBtn.onclick = () => {
-            document.getElementById('modal-title').innerText = "Add Lesson";
-            document.getElementById('lesson-form').reset();
-            document.getElementById('lesson-id').value = "";
-            document.getElementById('course-id-field').value = activeCourseId;
-            document.getElementById('lesson-modal').classList.remove('hidden');
+        document.getElementById('course-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('course-id').value;
+            const payload = {
+                title: document.getElementById('c-title').value,
+                category: document.getElementById('c-category').value,
+                price: parseFloat(document.getElementById('c-price').value),
+                thumbnail: document.getElementById('c-thumbnail').value
+            };
+
+            const { error } = id 
+                ? await supabaseClient.from('courses').update(payload).eq('id', id)
+                : await supabaseClient.from('courses').insert([payload]);
+
+            if (!error) {
+                showToast(id ? "Course updated successfully" : "New course published");
+                closeCourseModal();
+                fetchCourses();
+                fetchStats();
+            } else { showToast(error.message); }
         };
 
-        function closeModal() { document.getElementById('lesson-modal').classList.add('hidden'); }
+        // --- LESSON CRUD ---
+        addLessonBtn.onclick = () => openLessonModal();
+
+        function openLessonModal(lesson = null) {
+            document.getElementById('lesson-modal-title').innerText = lesson ? "Edit Lesson" : "Add New Lesson";
+            document.getElementById('l-id').value = lesson ? lesson.id : "";
+            document.getElementById('l-course-id').value = activeCourseId;
+            document.getElementById('l-title').value = lesson ? lesson.title : "";
+            document.getElementById('l-type').value = lesson ? lesson.lesson_type : "video";
+            document.getElementById('l-duration').value = lesson ? lesson.duration : "";
+            document.getElementById('l-url').value = lesson ? lesson.video_url : "";
+            document.getElementById('lesson-modal').classList.remove('hidden');
+        }
+
+        function closeLessonModal() { document.getElementById('lesson-modal').classList.add('hidden'); }
 
         document.getElementById('lesson-form').onsubmit = async (e) => {
             e.preventDefault();
-            const id = document.getElementById('lesson-id').value;
-            const course_id = document.getElementById('course-id-field').value;
+            const id = document.getElementById('l-id').value;
             const payload = {
-                course_id,
-                title: document.getElementById('lesson-title').value,
-                lesson_type: document.getElementById('lesson-type').value,
-                duration: document.getElementById('lesson-duration').value,
-                video_url: document.getElementById('lesson-video-url').value,
-                description: document.getElementById('lesson-desc').value
+                course_id: activeCourseId,
+                title: document.getElementById('l-title').value,
+                lesson_type: document.getElementById('l-type').value,
+                duration: document.getElementById('l-duration').value,
+                video_url: document.getElementById('l-url').value
             };
 
             const { error } = id 
@@ -401,56 +460,63 @@
                 : await supabaseClient.from('lessons').insert([payload]);
 
             if (!error) {
-                showToast(id ? "Lesson updated" : "Lesson added");
-                closeModal();
-                fetchLessons(course_id);
-            } else {
-                showToast("Error: " + error.message);
-            }
+                showToast("Lesson saved");
+                closeLessonModal();
+                fetchLessons(activeCourseId);
+            } else { showToast(error.message); }
         };
 
         async function deleteLesson(id) {
             if (!confirm("Are you sure you want to delete this lesson?")) return;
             const { error } = await supabaseClient.from('lessons').delete().eq('id', id);
-            if (!error) { showToast("Lesson deleted"); fetchLessons(activeCourseId); }
-            else { showToast("Error: " + error.message); }
+            if (!error) { showToast("Lesson removed"); fetchLessons(activeCourseId); }
         }
 
+        // --- UTILS ---
         async function updateEnrollStatus(id, status) {
             const { error } = await supabaseClient.from('enrollments').update({ status }).eq('id', id);
-            if (!error) { showToast(`Enrollment marked as ${status}`); fetchAllEnrollments(); fetchStats(); }
+            if (!error) { showToast(`Enrollment ${status}`); fetchEnrollments(); fetchStats(); }
         }
 
         async function fetchStats() {
-            const { count: sCount } = await supabaseClient.from('profiles').select('*', { count: 'exact', head: true });
+            const { count: sCount } = await supabaseClient.from('students').select('*', { count: 'exact', head: true });
             const { count: cCount } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
             const { count: pCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_approval']);
-            const { count: aCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active');
+            const { data: eData } = await supabaseClient.from('enrollments').select('courses(price)').eq('status', 'active');
+            
+            const revenue = eData?.reduce((acc, curr) => acc + (parseFloat(curr.courses?.price) || 0), 0) || 0;
+            
             document.getElementById('stat-students').textContent = sCount || 0;
             document.getElementById('stat-courses').textContent = cCount || 0;
             document.getElementById('stat-pending').textContent = pCount || 0;
-            document.getElementById('stat-active').textContent = aCount || 0;
+            document.getElementById('stat-active').textContent = 'Rs.' + Math.floor(revenue/1000) + 'k';
+        }
+
+        function renderLoading(cols) {
+            emptyState.classList.add('hidden');
+            tableBody.innerHTML = `<tr><td colspan="${cols}" class="px-8 py-20 text-center text-slate-400 animate-pulse font-bold tracking-widest">LOADING CONTENT...</td></tr>`;
+        }
+
+        function renderEmpty(cols) {
+            tableBody.innerHTML = '';
+            tableHead.innerHTML = '';
+            emptyState.classList.remove('hidden');
         }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
             toast.innerText = msg;
-            toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 3000);
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 3000);
         }
 
-        // --- UI INTERACTION ---
         backBtn.onclick = () => switchView('courses');
-        refreshBtn.onclick = () => switchView(currentView, activeCourseId);
+        document.getElementById('refresh-btn').onclick = () => switchView(currentView, activeCourseId);
         
-        toggleBtn.onclick = () => {
-            const collapsed = sidebar.classList.toggle('w-64');
-            sidebar.classList.toggle('w-20', !collapsed);
-            logoText.classList.toggle('hidden', !collapsed);
-            navLabels.forEach(l => l.classList.toggle('hidden', !collapsed));
-            document.getElementById('toggle-icon').style.transform = collapsed ? 'rotate(0deg)' : 'rotate(180deg)';
-        };
-
         document.getElementById('theme-toggle').onclick = () => {
             document.documentElement.classList.toggle('dark');
             updateIcons();
@@ -462,11 +528,6 @@
             document.getElementById('moon-icon').classList.toggle('hidden', isDark);
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         }
-
-        document.getElementById('logout-btn').onclick = async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'login.html';
-        };
 
         checkAdminAccess();
     </script>
