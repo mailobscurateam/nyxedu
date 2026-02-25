@@ -31,7 +31,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .active-nav { @apply bg-brand-50 dark:bg-brand-900/20 text-brand-600 font-bold; }
-        .modal-overlay { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body id="admin-body" class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300 flex opacity-0">
@@ -83,35 +83,38 @@
         <div class="max-w-6xl mx-auto">
             <div class="mb-10 flex justify-between items-end">
                 <div>
-                    <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Administration</h1>
-                    <p id="view-desc" class="text-slate-500 dark:text-slate-400 italic">Central command for EduStream records.</p>
+                    <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white mb-2">Platform Administration</h1>
+                    <p id="view-desc" class="text-slate-500 dark:text-slate-400">View and manage all course enrollment records.</p>
                 </div>
             </div>
 
             <!-- Admin Stats -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Waitlist</p>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Pending Approvals</p>
                     <p id="stat-pending" class="text-3xl font-black text-amber-500">0</p>
                 </div>
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Users</p>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Students</p>
                     <p id="stat-students" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
                 </div>
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Courses</p>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Courses</p>
                     <p id="stat-courses" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
                 </div>
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-1">Active Hub</p>
-                    <p id="stat-active" class="text-3xl font-black text-brand-600">--</p>
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Enrollments</p>
+                    <p id="stat-active" class="text-3xl font-black text-emerald-600">--</p>
                 </div>
             </div>
 
             <!-- Content Area -->
             <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
-                    <h2 id="table-title" class="font-bold text-slate-900 dark:text-white flex items-center gap-2"></h2>
+                    <h2 id="table-title" class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                        Loading...
+                    </h2>
                     <button id="refresh-btn" class="text-xs font-bold text-brand-600 hover:text-brand-700 uppercase tracking-tighter">Refresh</button>
                 </div>
 
@@ -123,41 +126,21 @@
                 </div>
 
                 <div id="empty-state" class="hidden py-20 text-center">
-                    <p class="text-slate-500 dark:text-slate-400 font-medium">No records found matching this view.</p>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">Nothing found here.</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Modal Pop-out -->
-    <div id="modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[2rem] shadow-2xl overflow-hidden transform scale-95 transition-transform">
-            <div class="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                <h3 id="modal-title" class="text-xl font-bold dark:text-white">Edit Record</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
-            </div>
-            <form id="modal-form" class="p-8 space-y-6">
-                <div id="modal-fields" class="space-y-4"></div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeModal()" class="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-2xl">Cancel</button>
-                    <button type="submit" class="flex-1 py-4 bg-brand-600 text-white font-bold rounded-2xl shadow-lg">Save Changes</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[100]"></div>
 
-    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[110]"></div>
-
+    <script src="supabase.js"></script>
     <script>
-        const CONFIG = {
-            SUPABASE_URL: 'https://pkqpvnrtxtqlngwtfnhy.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcXB2bnJ0eHRxbG5nd3Rmbmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzQxNTUsImV4cCI6MjA4NTk1MDE1NX0.wrYYlIzt1slOXkbUAqAaSI1bA9xJ2N8QhNHSRJIkZR0'
-        };
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
         let currentView = 'approvals';
-        let currentEditId = null;
 
+        // UI Selectors
         const sidebar = document.getElementById('sidebar');
         const toggleBtn = document.getElementById('toggle-sidebar');
         const logoText = document.getElementById('logo-text');
@@ -171,11 +154,20 @@
         async function checkAdminAccess() {
             try {
                 const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-                if (authError || !user) { window.location.href = 'login.html'; return; }
+                
+                if (authError || !user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
 
-                const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
 
-                if (!profile || profile.role !== 'admin') {
+                if (profileError || !profile || profile.role !== 'admin') {
+                    console.warn("Access denied: User is not an administrator.");
                     window.location.href = 'dashboard.html';
                     return;
                 }
@@ -183,168 +175,151 @@
                 adminBody.classList.remove('opacity-0');
                 adminBody.classList.add('opacity-100');
                 initDashboard();
-            } catch (err) { window.location.href = 'login.html'; }
+
+            } catch (err) {
+                console.error("Critical Auth Error:", err);
+                window.location.href = 'login.html';
+            }
         }
 
         function initDashboard() {
             updateIcons();
             fetchStats();
             switchView('approvals');
-            document.getElementById('modal-form').onsubmit = handleModalSubmit;
         }
 
         function switchView(view) {
             currentView = view;
-            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-nav'));
-            document.getElementById(`nav-${view}`)?.classList.add('active-nav');
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active-nav', 'bg-brand-50', 'dark:bg-brand-900/20', 'text-brand-600', 'font-bold');
+                btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+            });
+            const activeBtn = document.getElementById(`nav-${view}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active-nav', 'bg-brand-50', 'dark:bg-brand-900/20', 'text-brand-600', 'font-bold');
+                activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+            }
 
             const title = document.getElementById('view-title');
             const desc = document.getElementById('view-desc');
             const tableTitle = document.getElementById('table-title');
 
             if (view === 'approvals') {
-                title.innerText = "Enrollment Hub";
-                desc.innerText = "Monitor and process student course access.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Incoming Requests`;
+                title.innerText = "Enrollment Management";
+                desc.innerText = "Complete history of all enrollment requests.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> All Enrollments`;
                 fetchAllEnrollments();
             } else if (view === 'courses') {
-                title.innerText = "Curriculum Lab";
-                desc.innerText = "Modify pricing, titles, and course metadata.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Catalog Management`;
+                title.innerText = "Course Management";
+                desc.innerText = "Monitor and edit available courses.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Catalog List`;
                 fetchCourses();
             } else if (view === 'users') {
-                title.innerText = "People Operations";
-                desc.innerText = "Oversee student profiles and roles.";
-                tableTitle.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> User Directory`;
+                title.innerText = "User Directory";
+                desc.innerText = "Manage student accounts and profiles.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Student Database`;
                 fetchUsers();
             }
         }
 
         async function fetchAllEnrollments() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4">Ref</th><th class="px-6 py-4">Student</th><th class="px-6 py-4">Course</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
-            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center animate-pulse">Querying Records...</td></tr>`;
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Order ID</th><th class="px-6 py-4 font-black">Student</th><th class="px-6 py-4 font-black">Course</th><th class="px-6 py-4 font-black">Status</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading all records...</td></tr>`;
             
+            // Remove filter to show all records
             const { data, error } = await supabaseClient
                 .from('enrollments')
-                .select('*, courses(title), profiles(full_name, email)')
+                .select('*, courses(title)')
                 .order('created_at', { ascending: false });
 
-            if (error || !data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
-            emptyState.classList.add('hidden');
+            if (error || !data?.length) { 
+                tableBody.innerHTML = ''; 
+                emptyState.classList.remove('hidden'); 
+                return; 
+            }
             
+            emptyState.classList.add('hidden');
             tableBody.innerHTML = data.map(row => {
+                let statusBadge = '';
                 const status = row.status?.toLowerCase();
-                const studentName = row.profiles?.full_name || 'Anonymous';
                 
+                if (status === 'active' || status === 'approved') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase">Active</span>`;
+                } else if (status === 'pending' || status === 'pending_approval') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase">Pending</span>`;
+                } else if (status === 'rejected') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase">Rejected</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase">${status}</span>`;
+                }
+
+                // Only show action buttons if status is pending
+                const isPending = status === 'pending' || status === 'pending_approval';
+                const actions = isPending ? `
+                    <div class="flex justify-end gap-2">
+                        <button onclick="updateStatus('${row.id}', 'active')" class="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition" title="Approve">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button onclick="updateStatus('${row.id}', 'rejected')" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition" title="Reject">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                ` : `
+                    <div class="flex justify-end opacity-20 pointer-events-none">
+                        <span class="text-[10px] font-bold italic">Processed</span>
+                    </div>
+                `;
+
                 return `
                     <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                        <td class="px-6 py-4 font-mono text-[10px] text-slate-400 uppercase">#${row.order_id || '---'}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">${studentName}</td>
-                        <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-300">${row.courses?.title || 'Unknown'}</td>
+                        <td class="px-6 py-4 font-mono text-xs font-bold text-slate-400">#${row.order_id || '---'}</td>
                         <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded-full text-[9px] font-black uppercase ${status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">
-                                ${status}
-                            </span>
+                            <span class="text-sm font-bold text-slate-900 dark:text-white">${row.user_id.substring(0,8)}...</span>
                         </td>
-                        <td class="px-6 py-4 text-right">
-                            ${status === 'pending' ? `
-                                <button onclick="updateStatus('${row.id}', 'active')" class="text-emerald-600 font-bold text-[10px] uppercase">Approve</button>
-                            ` : `<span class="text-[9px] text-slate-300 uppercase italic">Closed</span>`}
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-slate-700 dark:text-slate-300">${row.courses?.title || 'Unknown Course'}</div>
+                            <div class="text-[10px] text-slate-400">${new Date(row.created_at).toLocaleDateString()}</div>
                         </td>
-                    </tr>`;
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-right">${actions}</td>
+                    </tr>
+                `;
             }).join('');
         }
 
         async function fetchCourses() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4">Course</th><th class="px-6 py-4">Price</th><th class="px-6 py-4 text-right">Actions</th></tr>`;
-            const { data } = await supabaseClient.from('courses').select('*').order('title');
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Thumbnail</th><th class="px-6 py-4 font-black">Course Info</th><th class="px-6 py-4 font-black">Price</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading courses...</td></tr>`;
+            const { data } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(course => `
-                <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                    <td class="px-6 py-4 text-sm font-bold">${course.title}</td>
-                    <td class="px-6 py-4 text-sm text-brand-600 font-black">Rs. ${course.price}</td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="openEditModal('courses', '${course.id}')" class="text-slate-400 hover:text-brand-600 font-bold text-[10px] uppercase tracking-wider">Configure</button>
-                    </td>
-                </tr>`).join('');
+            tableBody.innerHTML = data.map(course => `<tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition"><td class="px-6 py-4"><img src="${course.thumbnail}" class="w-12 h-12 rounded-lg object-cover"></td><td class="px-6 py-4 font-bold text-sm">${course.title}</td><td class="px-6 py-4 text-sm font-bold text-brand-600">Rs. ${course.price}</td><td class="px-6 py-4 text-right"><button class="text-slate-400 text-xs font-bold hover:text-brand-600 transition">EDIT</button></td></tr>`).join('');
         }
 
         async function fetchUsers() {
-            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4">Identity</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Manage</th></tr>`;
-            const { data } = await supabaseClient.from('profiles').select('*').order('full_name');
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Student Details</th><th class="px-6 py-4 font-black">Role</th><th class="px-6 py-4 font-black">Join Date</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading users...</td></tr>`;
+            const { data } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(user => `
-                <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
-                    <td class="px-6 py-4"><span class="text-sm font-bold">${user.full_name || 'Student'}</span><br><span class="text-[10px] text-slate-400">${user.email || 'No Email'}</span></td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-[9px] font-black uppercase ${user.role==='admin'?'bg-red-50 text-red-600':'bg-slate-100'}">${user.role}</span></td>
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="openEditModal('profiles', '${user.id}')" class="text-slate-400 hover:text-brand-600 font-bold text-[10px] uppercase tracking-wider">Edit</button>
-                    </td>
-                </tr>`).join('');
+            tableBody.innerHTML = data.map(user => `<tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition"><td class="px-6 py-4"><span class="text-sm font-bold">${user.full_name || 'Student'}</span><br><span class="text-[10px] text-slate-400">${user.id}</span></td><td class="px-6 py-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role==='admin'?'bg-brand-50 text-brand-600':'bg-emerald-50 text-emerald-600'} uppercase">${user.role || 'student'}</span></td><td class="px-6 py-4 text-xs">${new Date(user.created_at).toLocaleDateString()}</td><td class="px-6 py-4 text-right"><button class="text-slate-400 text-xs font-bold hover:text-brand-600 transition">VIEW</button></td></tr>`).join('');
         }
-
-        // --- MODAL LOGIC ---
-        async function openEditModal(table, id) {
-            currentEditId = id;
-            const { data, error } = await supabaseClient.from(table).select('*').eq('id', id).single();
-            if (error) return;
-
-            const fieldsDiv = document.getElementById('modal-fields');
-            let content = '';
-
-            if (table === 'courses') {
-                content = `
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Course Title</label>
-                    <input type="text" name="title" value="${data.title}" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-brand-500"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Price (LKR)</label>
-                    <input type="number" name="price" value="${data.price}" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-brand-500"></div>
-                `;
-            } else {
-                content = `
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Display Name</label>
-                    <input type="text" name="full_name" value="${data.full_name || ''}" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-brand-500"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase mb-2 block">Role</label>
-                    <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl outline-none focus:ring-2 ring-brand-500">
-                        <option value="student" ${data.role === 'student' ? 'selected' : ''}>Student</option>
-                        <option value="admin" ${data.role === 'admin' ? 'selected' : ''}>Admin</option>
-                    </select></div>
-                `;
-            }
-
-            fieldsDiv.innerHTML = content;
-            document.getElementById('modal-title').innerText = `Configure ${table.slice(0,-1)}`;
-            document.getElementById('modal').classList.remove('hidden');
-        }
-
-        async function handleModalSubmit(e) {
-            e.preventDefault();
-            const table = (currentView === 'courses') ? 'courses' : 'profiles';
-            const formData = new FormData(e.target);
-            const updateData = Object.fromEntries(formData.entries());
-
-            const { error } = await supabaseClient.from(table).update(updateData).eq('id', currentEditId);
-            if (!error) {
-                showToast("Changes saved successfully");
-                closeModal();
-                switchView(currentView);
-            } else {
-                showToast("Save failed: " + error.message);
-            }
-        }
-
-        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
 
         async function updateStatus(id, status) {
             const { error } = await supabaseClient.from('enrollments').update({ status }).eq('id', id);
-            if (!error) { showToast(`Record marked: ${status}`); fetchAllEnrollments(); fetchStats(); }
+            if (!error) { 
+                showToast(`Enrollment marked as ${status}`); 
+                fetchAllEnrollments(); 
+                fetchStats(); 
+            } else {
+                showToast(`Error: ${error.message}`);
+            }
         }
 
         async function fetchStats() {
             const { count: sCount } = await supabaseClient.from('profiles').select('*', { count: 'exact', head: true });
             const { count: cCount } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
-            const { count: pCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+            const { count: pCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_approval']);
             const { count: aCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active');
             document.getElementById('stat-students').textContent = sCount || 0;
             document.getElementById('stat-courses').textContent = cCount || 0;
@@ -354,11 +329,12 @@
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
-            toast.innerText = msg; toast.style.opacity = '1';
+            toast.innerText = msg;
+            toast.style.opacity = '1';
             setTimeout(() => toast.style.opacity = '0', 3000);
         }
 
-        // --- SIDEBAR ---
+        // Sidebar and Theme logic
         let isCollapsed = false;
         toggleBtn.addEventListener('click', () => {
             isCollapsed = !isCollapsed;
@@ -384,6 +360,8 @@
         });
 
         refreshBtn.addEventListener('click', () => switchView(currentView));
+
+        // Start Auth Check
         checkAdminAccess();
     </script>
 </body>
