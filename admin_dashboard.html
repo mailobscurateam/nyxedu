@@ -89,6 +89,12 @@
                         <tbody id="table-body" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
                     </table>
                 </div>
+                <div id="loading-state" class="hidden py-20 text-center">
+                    <p class="text-slate-400 animate-pulse font-bold tracking-widest uppercase">Fetching Records...</p>
+                </div>
+                <div id="empty-state" class="hidden py-20 text-center">
+                    <p class="text-slate-400 font-bold tracking-widest uppercase">No Records Found</p>
+                </div>
             </div>
         </div>
     </main>
@@ -121,16 +127,17 @@
         let currentEditId = null;
 
         async function checkAdminAccess() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) { window.location.href = 'login.html'; return; }
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+            if (sessionError || !session) { window.location.href = 'login.html'; return; }
 
-            const { data: profile } = await supabaseClient
+            const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('role')
                 .eq('id', session.user.id)
                 .single();
 
-            if (!profile || profile.role !== 'admin') {
+            if (profileError || !profile || profile.role !== 'admin') {
+                console.warn("Unauthorized: User is not an admin.");
                 window.location.href = 'dashboard.html';
                 return;
             }
@@ -176,15 +183,27 @@
             document.getElementById('view-desc').innerText = desc;
         }
 
+        function toggleLoading(isLoading) {
+            document.getElementById('loading-state').classList.toggle('hidden', !isLoading);
+            document.getElementById('table-body').classList.toggle('hidden', isLoading);
+            document.getElementById('empty-state').classList.add('hidden');
+        }
+
         // --- FETCHERS ---
 
         async function fetchEnrollments() {
-            const { data } = await supabaseClient.from('enrollments').select('*, courses(title), profiles(full_name)').order('created_at', { ascending: false });
+            toggleLoading(true);
+            const { data, error } = await supabaseClient.from('enrollments').select('*, courses(title), profiles(full_name)').order('created_at', { ascending: false });
+            toggleLoading(false);
+
+            if (error) { console.error("Error fetching enrollments:", error); return; }
+            if (!data || data.length === 0) { document.getElementById('empty-state').classList.remove('hidden'); return; }
+
             renderTable(
                 ['Student', 'Course', 'Status', 'Date'],
                 data.map(row => [
-                    row.profiles?.full_name || row.user_id,
-                    row.courses?.title || 'Unknown',
+                    row.profiles?.full_name || row.user_id?.substring(0,8) + '...',
+                    row.courses?.title || 'Unknown Course',
                     `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${row.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${row.status}</span>`,
                     new Date(row.created_at).toLocaleDateString()
                 ]),
@@ -193,19 +212,31 @@
         }
 
         async function fetchCourses() {
-            const { data } = await supabaseClient.from('courses').select('*').order('title');
+            toggleLoading(true);
+            const { data, error } = await supabaseClient.from('courses').select('*').order('title');
+            toggleLoading(false);
+
+            if (error) { console.error("Error fetching courses:", error); return; }
+            if (!data || data.length === 0) { document.getElementById('empty-state').classList.remove('hidden'); return; }
+
             renderTable(
                 ['Title', 'Price', 'Level', 'Status'],
-                data.map(row => [row.title, `$${row.price}`, row.level, row.is_published ? 'Live' : 'Draft']),
+                data.map(row => [row.title, `$${row.price}`, row.level || 'Beginner', row.is_published ? 'Live' : 'Draft']),
                 data.map(row => ({ id: row.id, actions: ['Edit', 'Delete'] }))
             );
         }
 
         async function fetchProfiles(role) {
-            const { data } = await supabaseClient.from('profiles').select('*').eq('role', role);
+            toggleLoading(true);
+            const { data, error } = await supabaseClient.from('profiles').select('*').eq('role', role);
+            toggleLoading(false);
+
+            if (error) { console.error(`Error fetching ${role}s:`, error); return; }
+            if (!data || data.length === 0) { document.getElementById('empty-state').classList.remove('hidden'); return; }
+
             renderTable(
                 ['Name', 'Email', 'Role'],
-                data.map(row => [row.full_name || 'N/A', row.email || 'N/A', row.role]),
+                data.map(row => [row.full_name || 'No Name', row.email || 'No Email', row.role]),
                 data.map(row => ({ id: row.id, actions: ['Edit', 'Delete'] }))
             );
         }
@@ -233,9 +264,10 @@
         // --- ACTIONS ---
 
         async function handleAction(action, id) {
+            const table = currentView === 'approvals' ? 'enrollments' : (currentView === 'courses' ? 'courses' : 'profiles');
+
             if (action === 'Delete') {
                 if (!confirm("Are you sure? This cannot be undone.")) return;
-                const table = currentView === 'approvals' ? 'enrollments' : (currentView === 'courses' ? 'courses' : 'profiles');
                 await supabaseClient.from(table).delete().eq('id', id);
                 switchView(currentView);
             } else if (action === 'Approve') {
@@ -257,7 +289,8 @@
             currentEditId = id;
             document.getElementById('modal-title').innerText = `Edit ${currentView.slice(0, -1)}`;
             const table = currentView === 'courses' ? 'courses' : 'profiles';
-            const { data } = await supabaseClient.from(table).select('*').eq('id', id).single();
+            const { data, error } = await supabaseClient.from(table).select('*').eq('id', id).single();
+            if (error) { console.error("Error loading record:", error); return; }
             setupForm(data);
             document.getElementById('modal').classList.remove('hidden');
         }
@@ -268,10 +301,10 @@
 
             if (currentView === 'courses') {
                 fields = `
-                    <input type="text" name="title" value="${data.title || ''}" placeholder="Course Title" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl" required>
-                    <textarea name="description" placeholder="Description" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl">${data.description || ''}</textarea>
-                    <input type="number" name="price" value="${data.price || 0}" placeholder="Price" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl">
-                    <select name="level" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl">
+                    <input type="text" name="title" value="${data.title || ''}" placeholder="Course Title" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
+                    <textarea name="description" placeholder="Description" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">${data.description || ''}</textarea>
+                    <input type="number" name="price" value="${data.price || 0}" placeholder="Price" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
+                    <select name="level" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
                         <option value="Beginner" ${data.level === 'Beginner' ? 'selected' : ''}>Beginner</option>
                         <option value="Intermediate" ${data.level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
                         <option value="Advanced" ${data.level === 'Advanced' ? 'selected' : ''}>Advanced</option>
@@ -279,9 +312,9 @@
                 `;
             } else {
                 fields = `
-                    <input type="text" name="full_name" value="${data.full_name || ''}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl" required>
-                    <input type="email" name="email" value="${data.email || ''}" placeholder="Email Address" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl" required>
-                    <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl">
+                    <input type="text" name="full_name" value="${data.full_name || ''}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
+                    <input type="email" name="email" value="${data.email || ''}" placeholder="Email Address" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
+                    <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
                         <option value="student" ${data.role === 'student' ? 'selected' : ''}>Student</option>
                         <option value="instructor" ${data.role === 'instructor' ? 'selected' : ''}>Instructor</option>
                         <option value="admin" ${data.role === 'admin' ? 'selected' : ''}>Admin</option>
