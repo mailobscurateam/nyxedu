@@ -104,13 +104,13 @@
         <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
             <div class="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h3 id="modal-title" class="text-xl font-bold dark:text-white">Edit Record</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">&times;</button>
+                <button onclick="closeModal()" class="text-3xl text-slate-400 hover:text-slate-600 leading-none">&times;</button>
             </div>
             <form id="modal-form" class="p-8 space-y-4">
                 <div id="form-fields" class="space-y-4"></div>
                 <div class="pt-6 flex gap-3">
                     <button type="button" onclick="closeModal()" class="flex-1 px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl">Cancel</button>
-                    <button type="submit" class="flex-1 px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg">Save Changes</button>
+                    <button type="submit" id="save-btn" class="flex-1 px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg">Save Changes</button>
                 </div>
             </form>
         </div>
@@ -152,13 +152,14 @@
                 await supabaseClient.auth.signOut();
                 window.location.href = 'login.html';
             };
-            document.getElementById('modal-form').onsubmit = handleFormSubmit;
+            document.getElementById('modal-form').addEventListener('submit', handleFormSubmit);
         }
 
         function switchView(view) {
             currentView = view;
             document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav'));
-            document.getElementById(`nav-${view}`).classList.add('active-nav');
+            const activeBtn = document.getElementById(`nav-${view}`);
+            if(activeBtn) activeBtn.classList.add('active-nav');
             
             const createBtn = document.getElementById('create-btn');
             createBtn.style.display = (view === 'approvals') ? 'none' : 'block';
@@ -193,7 +194,11 @@
 
         async function fetchEnrollments() {
             toggleLoading(true);
-            const { data, error } = await supabaseClient.from('enrollments').select('*, courses(title), profiles(full_name)').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient
+                .from('enrollments')
+                .select('*, courses(title), profiles(full_name, email)')
+                .order('created_at', { ascending: false });
+            
             toggleLoading(false);
 
             if (error) { console.error("Error fetching enrollments:", error); return; }
@@ -202,12 +207,12 @@
             renderTable(
                 ['Student', 'Course', 'Status', 'Date'],
                 data.map(row => [
-                    row.profiles?.full_name || row.user_id?.substring(0,8) + '...',
+                    row.profiles?.full_name || 'Unknown Student',
                     row.courses?.title || 'Unknown Course',
                     `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${row.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${row.status}</span>`,
                     new Date(row.created_at).toLocaleDateString()
                 ]),
-                data.map(row => ({ id: row.id, actions: ['Approve', 'Delete'] }))
+                data.map(row => ({ id: row.id, actions: row.status === 'pending' ? ['Approve', 'Delete'] : ['Delete'] }))
             );
         }
 
@@ -221,25 +226,33 @@
 
             renderTable(
                 ['Title', 'Price', 'Level', 'Status'],
-                data.map(row => [row.title, `$${row.price}`, row.level || 'Beginner', row.is_published ? 'Live' : 'Draft']),
+                data.map(row => [
+                    row.title, 
+                    `$${row.price}`, 
+                    row.level || 'Beginner', 
+                    `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${row.is_published ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}">${row.is_published ? 'Live' : 'Draft'}</span>`
+                ]),
                 data.map(row => ({ id: row.id, actions: ['Edit', 'Delete'] }))
             );
         }
 
         async function fetchProfiles(role) {
             toggleLoading(true);
-            // Determine table name based on role
-            const tableName = role === 'student' ? 'students' : (role === 'instructor' ? 'instructors' : 'profiles');
+            // In EduStream, all users are in the 'profiles' table with a 'role' column
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('role', role)
+                .order('full_name');
             
-            const { data, error } = await supabaseClient.from(tableName).select('*');
             toggleLoading(false);
 
-            if (error) { console.error(`Error fetching ${role}s from ${tableName}:`, error); return; }
+            if (error) { console.error(`Error fetching ${role}s:`, error); return; }
             if (!data || data.length === 0) { document.getElementById('empty-state').classList.remove('hidden'); return; }
 
             renderTable(
                 ['Name', 'Email', 'Role'],
-                data.map(row => [row.full_name || row.name || 'No Name', row.email || 'No Email', role]),
+                data.map(row => [row.full_name || 'No Name', row.email || 'No Email', role]),
                 data.map(row => ({ id: row.id, actions: ['Edit', 'Delete'] }))
             );
         }
@@ -253,11 +266,11 @@
             head.innerHTML = `<tr>${headers.map(h => `<th class="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">${h}</th>`).join('')}<th class="px-6 py-4 text-right">Actions</th></tr>`;
             
             body.innerHTML = rows.map((row, i) => `
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition">
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition border-b border-slate-50 dark:border-slate-800">
                     ${row.map(cell => `<td class="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">${cell}</td>`).join('')}
-                    <td class="px-6 py-4 text-right space-x-2">
+                    <td class="px-6 py-4 text-right space-x-3">
                         ${meta[i].actions.map(act => `
-                            <button onclick="handleAction('${act}', '${meta[i].id}')" class="text-xs font-bold ${act === 'Delete' ? 'text-red-500' : 'text-brand-600'} hover:underline uppercase">${act}</button>
+                            <button onclick="handleAction('${act}', '${meta[i].id}')" class="text-xs font-bold ${act === 'Delete' ? 'text-red-500 hover:text-red-700' : 'text-brand-600 hover:text-brand-800'} uppercase transition">${act}</button>
                         `).join('')}
                     </td>
                 </tr>
@@ -270,15 +283,15 @@
             let table = 'profiles';
             if (currentView === 'approvals') table = 'enrollments';
             else if (currentView === 'courses') table = 'courses';
-            else if (currentView === 'students') table = 'students';
-            else if (currentView === 'instructors') table = 'instructors';
 
             if (action === 'Delete') {
                 if (!confirm("Are you sure? This cannot be undone.")) return;
-                await supabaseClient.from(table).delete().eq('id', id);
+                const { error } = await supabaseClient.from(table).delete().eq('id', id);
+                if (error) { alert("Error deleting record."); console.error(error); }
                 switchView(currentView);
             } else if (action === 'Approve') {
-                await supabaseClient.from('enrollments').update({ status: 'active' }).eq('id', id);
+                const { error } = await supabaseClient.from('enrollments').update({ status: 'active' }).eq('id', id);
+                if (error) { alert("Error approving enrollment."); console.error(error); }
                 switchView(currentView);
             } else if (action === 'Edit') {
                 openEditModal(id);
@@ -296,13 +309,11 @@
             currentEditId = id;
             document.getElementById('modal-title').innerText = `Edit ${currentView.slice(0, -1)}`;
             
-            let table = 'profiles';
-            if (currentView === 'courses') table = 'courses';
-            else if (currentView === 'students') table = 'students';
-            else if (currentView === 'instructors') table = 'instructors';
+            let table = (currentView === 'courses') ? 'courses' : 'profiles';
 
             const { data, error } = await supabaseClient.from(table).select('*').eq('id', id).single();
             if (error) { console.error("Error loading record:", error); return; }
+            
             setupForm(data);
             document.getElementById('modal').classList.remove('hidden');
         }
@@ -313,25 +324,47 @@
 
             if (currentView === 'courses') {
                 fields = `
-                    <input type="text" name="title" value="${data.title || ''}" placeholder="Course Title" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
-                    <textarea name="description" placeholder="Description" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">${data.description || ''}</textarea>
-                    <input type="number" name="price" value="${data.price || 0}" placeholder="Price" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
-                    <select name="level" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
-                        <option value="Beginner" ${data.level === 'Beginner' ? 'selected' : ''}>Beginner</option>
-                        <option value="Intermediate" ${data.level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
-                        <option value="Advanced" ${data.level === 'Advanced' ? 'selected' : ''}>Advanced</option>
-                    </select>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Course Title</label>
+                        <input type="text" name="title" value="${data.title || ''}" placeholder="Course Title" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Description</label>
+                        <textarea name="description" placeholder="Description" rows="3" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">${data.description || ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Price ($)</label>
+                            <input type="number" name="price" value="${data.price || 0}" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Level</label>
+                            <select name="level" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                                <option value="Beginner" ${data.level === 'Beginner' ? 'selected' : ''}>Beginner</option>
+                                <option value="Intermediate" ${data.level === 'Intermediate' ? 'selected' : ''}>Intermediate</option>
+                                <option value="Advanced" ${data.level === 'Advanced' ? 'selected' : ''}>Advanced</option>
+                            </select>
+                        </div>
+                    </div>
                 `;
             } else {
-                const nameVal = data.full_name || data.name || '';
                 fields = `
-                    <input type="text" name="full_name" value="${nameVal}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
-                    <input type="email" name="email" value="${data.email || ''}" placeholder="Email Address" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
-                    <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
-                        <option value="student" ${currentView === 'students' ? 'selected' : ''}>Student</option>
-                        <option value="instructor" ${currentView === 'instructors' ? 'selected' : ''}>Instructor</option>
-                        <option value="admin">Admin</option>
-                    </select>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Full Name</label>
+                        <input type="text" name="full_name" value="${data.full_name || ''}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">Email</label>
+                        <input type="email" name="email" value="${data.email || ''}" placeholder="Email Address" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-2">System Role</label>
+                        <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                            <option value="student" ${data.role === 'student' || currentView === 'students' ? 'selected' : ''}>Student</option>
+                            <option value="instructor" ${data.role === 'instructor' || currentView === 'instructors' ? 'selected' : ''}>Instructor</option>
+                            <option value="admin" ${data.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </div>
                 `;
             }
             container.innerHTML = fields;
@@ -339,36 +372,40 @@
 
         async function handleFormSubmit(e) {
             e.preventDefault();
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerText = "Saving...";
+
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
             
-            let table = 'profiles';
-            if (currentView === 'courses') table = 'courses';
-            else if (currentView === 'students') table = 'students';
-            else if (currentView === 'instructors') table = 'instructors';
+            let table = (currentView === 'courses') ? 'courses' : 'profiles';
 
-            // Handle potential field name differences between tables
-            if (table === 'students' || table === 'instructors') {
-                if (payload.full_name) {
-                    payload.name = payload.full_name;
-                    delete payload.full_name;
+            try {
+                if (currentEditId) {
+                    const { error } = await supabaseClient.from(table).update(payload).eq('id', currentEditId);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from(table).insert([payload]);
+                    if (error) throw error;
                 }
+                closeModal();
+                switchView(currentView);
+            } catch (err) {
+                alert("Operation failed. Check console.");
+                console.error(err);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Save Changes";
             }
-
-            if (currentEditId) {
-                await supabaseClient.from(table).update(payload).eq('id', currentEditId);
-            } else {
-                await supabaseClient.from(table).insert([payload]);
-            }
-
-            closeModal();
-            switchView(currentView);
         }
 
         function closeModal() {
             document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal-form').reset();
         }
 
+        // Start
         checkAdminAccess();
     </script>
 </body>
