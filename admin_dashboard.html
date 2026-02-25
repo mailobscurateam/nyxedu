@@ -261,10 +261,8 @@
 
     <div id="toast" class="fixed bottom-8 right-8 px-8 py-4 bg-slate-900 text-white text-sm font-black rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[110] transform translate-y-4"></div>
 
+    <script src="supabase.js"></script>
     <script>
-        // Use environment variables for Supabase configuration
-        const SUPABASE_URL = typeof __supabase_url !== 'undefined' ? __supabase_url : '';
-        const SUPABASE_ANON_KEY = typeof __supabase_anon_key !== 'undefined' ? __supabase_anon_key : '';
 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentView = 'approvals';
