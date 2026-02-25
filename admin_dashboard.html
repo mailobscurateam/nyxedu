@@ -74,7 +74,7 @@
             <header class="mb-8 flex justify-between items-end">
                 <div>
                     <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Management</h1>
-                    <p id="view-desc" class="text-slate-500">Resourceadministration console.</p>
+                    <p id="view-desc" class="text-slate-500">Resource administration console.</p>
                 </div>
                 <button id="create-btn" onclick="openCreateModal()" class="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg hover:bg-brand-700 transition">
                     + CREATE NEW
@@ -228,15 +228,18 @@
 
         async function fetchProfiles(role) {
             toggleLoading(true);
-            const { data, error } = await supabaseClient.from('profiles').select('*').eq('role', role);
+            // Determine table name based on role
+            const tableName = role === 'student' ? 'students' : (role === 'instructor' ? 'instructors' : 'profiles');
+            
+            const { data, error } = await supabaseClient.from(tableName).select('*');
             toggleLoading(false);
 
-            if (error) { console.error(`Error fetching ${role}s:`, error); return; }
+            if (error) { console.error(`Error fetching ${role}s from ${tableName}:`, error); return; }
             if (!data || data.length === 0) { document.getElementById('empty-state').classList.remove('hidden'); return; }
 
             renderTable(
                 ['Name', 'Email', 'Role'],
-                data.map(row => [row.full_name || 'No Name', row.email || 'No Email', row.role]),
+                data.map(row => [row.full_name || row.name || 'No Name', row.email || 'No Email', role]),
                 data.map(row => ({ id: row.id, actions: ['Edit', 'Delete'] }))
             );
         }
@@ -264,7 +267,11 @@
         // --- ACTIONS ---
 
         async function handleAction(action, id) {
-            const table = currentView === 'approvals' ? 'enrollments' : (currentView === 'courses' ? 'courses' : 'profiles');
+            let table = 'profiles';
+            if (currentView === 'approvals') table = 'enrollments';
+            else if (currentView === 'courses') table = 'courses';
+            else if (currentView === 'students') table = 'students';
+            else if (currentView === 'instructors') table = 'instructors';
 
             if (action === 'Delete') {
                 if (!confirm("Are you sure? This cannot be undone.")) return;
@@ -288,7 +295,12 @@
         async function openEditModal(id) {
             currentEditId = id;
             document.getElementById('modal-title').innerText = `Edit ${currentView.slice(0, -1)}`;
-            const table = currentView === 'courses' ? 'courses' : 'profiles';
+            
+            let table = 'profiles';
+            if (currentView === 'courses') table = 'courses';
+            else if (currentView === 'students') table = 'students';
+            else if (currentView === 'instructors') table = 'instructors';
+
             const { data, error } = await supabaseClient.from(table).select('*').eq('id', id).single();
             if (error) { console.error("Error loading record:", error); return; }
             setupForm(data);
@@ -311,13 +323,14 @@
                     </select>
                 `;
             } else {
+                const nameVal = data.full_name || data.name || '';
                 fields = `
-                    <input type="text" name="full_name" value="${data.full_name || ''}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
+                    <input type="text" name="full_name" value="${nameVal}" placeholder="Full Name" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
                     <input type="email" name="email" value="${data.email || ''}" placeholder="Email Address" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white" required>
                     <select name="role" class="w-full p-4 bg-slate-50 dark:bg-slate-800 border-none rounded-xl dark:text-white">
-                        <option value="student" ${data.role === 'student' ? 'selected' : ''}>Student</option>
-                        <option value="instructor" ${data.role === 'instructor' ? 'selected' : ''}>Instructor</option>
-                        <option value="admin" ${data.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        <option value="student" ${currentView === 'students' ? 'selected' : ''}>Student</option>
+                        <option value="instructor" ${currentView === 'instructors' ? 'selected' : ''}>Instructor</option>
+                        <option value="admin">Admin</option>
                     </select>
                 `;
             }
@@ -328,7 +341,19 @@
             e.preventDefault();
             const formData = new FormData(e.target);
             const payload = Object.fromEntries(formData.entries());
-            const table = currentView === 'courses' ? 'courses' : 'profiles';
+            
+            let table = 'profiles';
+            if (currentView === 'courses') table = 'courses';
+            else if (currentView === 'students') table = 'students';
+            else if (currentView === 'instructors') table = 'instructors';
+
+            // Handle potential field name differences between tables
+            if (table === 'students' || table === 'instructors') {
+                if (payload.full_name) {
+                    payload.name = payload.full_name;
+                    delete payload.full_name;
+                }
+            }
 
             if (currentEditId) {
                 await supabaseClient.from(table).update(payload).eq('id', currentEditId);
