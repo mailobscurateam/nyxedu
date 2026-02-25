@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | EduStream</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 
+                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 
+                            800: '#075985', 900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        };
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .active-nav { @apply bg-brand-50 dark:bg-brand-900/20 text-brand-600 font-bold; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body id="admin-body" class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300 flex opacity-0">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-transition w-64 h-screen sticky top-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <a href="#" onclick="switchView('approvals')" class="flex items-center gap-2 overflow-hidden">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-black">E</div>
+                <span id="logo-text" class="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tighter whitespace-nowrap">EduStream</span>
+            </a>
+            <button id="toggle-sidebar" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                <svg id="toggle-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+            </button>
+        </div>
+
+        <nav class="flex-grow py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+            <button onclick="switchView('approvals')" id="nav-approvals" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group active-nav">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="nav-label whitespace-nowrap">Enrollments</span>
+            </button>
+            <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-medium transition-all group">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span class="nav-label whitespace-nowrap">Courses</span>
+            </button>
+            <button onclick="switchView('users')" id="nav-users" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-medium transition-all group">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span class="nav-label whitespace-nowrap">Users</span>
+            </button>
+        </nav>
+
+        <div class="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
+            <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl font-medium transition-all">
+                <div class="w-5 h-5 shrink-0 flex items-center justify-center">
+                    <svg id="sun-icon" class="w-full h-full hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <svg id="moon-icon" class="w-full h-full hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </div>
+                <span class="nav-label whitespace-nowrap">Appearance</span>
+            </button>
+            <button id="logout-btn" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl font-medium transition-all">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span class="nav-label whitespace-nowrap">Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 md:p-8 lg:p-12 overflow-x-hidden">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-10 flex justify-between items-end">
+                <div>
+                    <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white mb-2">Platform Administration</h1>
+                    <p id="view-desc" class="text-slate-500 dark:text-slate-400">View and manage all course enrollment records.</p>
+                </div>
+            </div>
+
+            <!-- Admin Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Pending Approvals</p>
+                    <p id="stat-pending" class="text-3xl font-black text-amber-500">0</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Students</p>
+                    <p id="stat-students" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Total Courses</p>
+                    <p id="stat-courses" class="text-3xl font-black text-slate-900 dark:text-white">--</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Active Enrollments</p>
+                    <p id="stat-active" class="text-3xl font-black text-emerald-600">--</p>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+                    <h2 id="table-title" class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
+                        Loading...
+                    </h2>
+                    <button id="refresh-btn" class="text-xs font-bold text-brand-600 hover:text-brand-700 uppercase tracking-tighter">Refresh</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+
+                <div id="empty-state" class="hidden py-20 text-center">
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">Nothing found here.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all pointer-events-none z-[100]"></div>
+
+    <script>
+        const CONFIG = {
+            SUPABASE_URL: 'https://pkqpvnrtxtqlngwtfnhy.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcXB2bnJ0eHRxbG5nd3Rmbmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzQxNTUsImV4cCI6MjA4NTk1MDE1NX0.wrYYlIzt1slOXkbUAqAaSI1bA9xJ2N8QhNHSRJIkZR0'
+        };
+
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        let currentView = 'approvals';
+
+        // UI Selectors
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const logoText = document.getElementById('logo-text');
+        const navLabels = document.querySelectorAll('.nav-label');
+        const tableBody = document.getElementById('table-body');
+        const tableHead = document.getElementById('table-head');
+        const emptyState = document.getElementById('empty-state');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const adminBody = document.getElementById('admin-body');
+
+        async function checkAdminAccess() {
+            try {
+                const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+                
+                if (authError || !user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const { data: profile, error: profileError } = await supabaseClient
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                if (profileError || !profile || profile.role !== 'admin') {
+                    console.warn("Access denied: User is not an administrator.");
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                adminBody.classList.remove('opacity-0');
+                adminBody.classList.add('opacity-100');
+                initDashboard();
+
+            } catch (err) {
+                console.error("Critical Auth Error:", err);
+                window.location.href = 'login.html';
+            }
+        }
+
+        function initDashboard() {
+            updateIcons();
+            fetchStats();
+            switchView('approvals');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('active-nav', 'bg-brand-50', 'dark:bg-brand-900/20', 'text-brand-600', 'font-bold');
+                btn.classList.add('text-slate-600', 'dark:text-slate-400', 'font-medium');
+            });
+            const activeBtn = document.getElementById(`nav-${view}`);
+            if (activeBtn) {
+                activeBtn.classList.add('active-nav', 'bg-brand-50', 'dark:bg-brand-900/20', 'text-brand-600', 'font-bold');
+                activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400', 'font-medium');
+            }
+
+            const title = document.getElementById('view-title');
+            const desc = document.getElementById('view-desc');
+            const tableTitle = document.getElementById('table-title');
+
+            if (view === 'approvals') {
+                title.innerText = "Enrollment Management";
+                desc.innerText = "Complete history of all enrollment requests.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> All Enrollments`;
+                fetchAllEnrollments();
+            } else if (view === 'courses') {
+                title.innerText = "Course Management";
+                desc.innerText = "Monitor and edit available courses.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-brand-500 rounded-full"></span> Catalog List`;
+                fetchCourses();
+            } else if (view === 'users') {
+                title.innerText = "User Directory";
+                desc.innerText = "Manage student accounts and profiles.";
+                tableTitle.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full"></span> Student Database`;
+                fetchUsers();
+            }
+        }
+
+        async function fetchAllEnrollments() {
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Order ID</th><th class="px-6 py-4 font-black">Student</th><th class="px-6 py-4 font-black">Course</th><th class="px-6 py-4 font-black">Status</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading all records...</td></tr>`;
+            
+            // Remove filter to show all records
+            const { data, error } = await supabaseClient
+                .from('enrollments')
+                .select('*, courses(title)')
+                .order('created_at', { ascending: false });
+
+            if (error || !data?.length) { 
+                tableBody.innerHTML = ''; 
+                emptyState.classList.remove('hidden'); 
+                return; 
+            }
+            
+            emptyState.classList.add('hidden');
+            tableBody.innerHTML = data.map(row => {
+                let statusBadge = '';
+                const status = row.status?.toLowerCase();
+                
+                if (status === 'active' || status === 'approved') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase">Active</span>`;
+                } else if (status === 'pending' || status === 'pending_approval') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-amber-50 text-amber-600 text-[10px] font-black uppercase">Pending</span>`;
+                } else if (status === 'rejected') {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-red-50 text-red-600 text-[10px] font-black uppercase">Rejected</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-black uppercase">${status}</span>`;
+                }
+
+                // Only show action buttons if status is pending
+                const isPending = status === 'pending' || status === 'pending_approval';
+                const actions = isPending ? `
+                    <div class="flex justify-end gap-2">
+                        <button onclick="updateStatus('${row.id}', 'active')" class="p-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition" title="Approve">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        </button>
+                        <button onclick="updateStatus('${row.id}', 'rejected')" class="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition" title="Reject">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                ` : `
+                    <div class="flex justify-end opacity-20 pointer-events-none">
+                        <span class="text-[10px] font-bold italic">Processed</span>
+                    </div>
+                `;
+
+                return `
+                    <tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition">
+                        <td class="px-6 py-4 font-mono text-xs font-bold text-slate-400">#${row.order_id || '---'}</td>
+                        <td class="px-6 py-4">
+                            <span class="text-sm font-bold text-slate-900 dark:text-white">${row.user_id.substring(0,8)}...</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-slate-700 dark:text-slate-300">${row.courses?.title || 'Unknown Course'}</div>
+                            <div class="text-[10px] text-slate-400">${new Date(row.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-right">${actions}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function fetchCourses() {
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Thumbnail</th><th class="px-6 py-4 font-black">Course Info</th><th class="px-6 py-4 font-black">Price</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading courses...</td></tr>`;
+            const { data } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
+            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+            emptyState.classList.add('hidden');
+            tableBody.innerHTML = data.map(course => `<tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition"><td class="px-6 py-4"><img src="${course.thumbnail}" class="w-12 h-12 rounded-lg object-cover"></td><td class="px-6 py-4 font-bold text-sm">${course.title}</td><td class="px-6 py-4 text-sm font-bold text-brand-600">Rs. ${course.price}</td><td class="px-6 py-4 text-right"><button class="text-slate-400 text-xs font-bold hover:text-brand-600 transition">EDIT</button></td></tr>`).join('');
+        }
+
+        async function fetchUsers() {
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800"><th class="px-6 py-4 font-black">Student Details</th><th class="px-6 py-4 font-black">Role</th><th class="px-6 py-4 font-black">Join Date</th><th class="px-6 py-4 font-black text-right">Actions</th></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400 animate-pulse">Loading users...</td></tr>`;
+            const { data } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+            emptyState.classList.add('hidden');
+            tableBody.innerHTML = data.map(user => `<tr class="border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50/50 transition"><td class="px-6 py-4"><span class="text-sm font-bold">${user.full_name || 'Student'}</span><br><span class="text-[10px] text-slate-400">${user.id}</span></td><td class="px-6 py-4"><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${user.role==='admin'?'bg-brand-50 text-brand-600':'bg-emerald-50 text-emerald-600'} uppercase">${user.role || 'student'}</span></td><td class="px-6 py-4 text-xs">${new Date(user.created_at).toLocaleDateString()}</td><td class="px-6 py-4 text-right"><button class="text-slate-400 text-xs font-bold hover:text-brand-600 transition">VIEW</button></td></tr>`).join('');
+        }
+
+        async function updateStatus(id, status) {
+            const { error } = await supabaseClient.from('enrollments').update({ status }).eq('id', id);
+            if (!error) { 
+                showToast(`Enrollment marked as ${status}`); 
+                fetchAllEnrollments(); 
+                fetchStats(); 
+            } else {
+                showToast(`Error: ${error.message}`);
+            }
+        }
+
+        async function fetchStats() {
+            const { count: sCount } = await supabaseClient.from('profiles').select('*', { count: 'exact', head: true });
+            const { count: cCount } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
+            const { count: pCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).in('status', ['pending', 'pending_approval']);
+            const { count: aCount } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active');
+            document.getElementById('stat-students').textContent = sCount || 0;
+            document.getElementById('stat-courses').textContent = cCount || 0;
+            document.getElementById('stat-pending').textContent = pCount || 0;
+            document.getElementById('stat-active').textContent = aCount || 0;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 3000);
+        }
+
+        // Sidebar and Theme logic
+        let isCollapsed = false;
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            sidebar.classList.toggle('w-64', !isCollapsed); sidebar.classList.toggle('w-20', isCollapsed);
+            logoText.classList.toggle('hidden', isCollapsed); navLabels.forEach(l => l.classList.toggle('hidden', isCollapsed));
+            document.getElementById('toggle-icon').style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
+        });
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            updateIcons();
+        });
+
+        function updateIcons() {
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('sun-icon').classList.toggle('hidden', !isDark);
+            document.getElementById('moon-icon').classList.toggle('hidden', isDark);
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        });
+
+        refreshBtn.addEventListener('click', () => switchView(currentView));
+
+        // Start Auth Check
+        checkAdminAccess();
+    </script>
+</body>
+</html>

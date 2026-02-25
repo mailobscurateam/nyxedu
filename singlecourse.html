@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details | EduStream</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399',
+                            500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        };
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
+
+    <div id="toast-container" class="fixed top-20 right-4 z-[100] space-y-2"></div>
+
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-8">
+                <a href="dashboard.html" class="text-xl font-bold text-emerald-600 font-mono tracking-tighter">EduStream</a>
+                <nav class="hidden md:flex gap-6 text-sm font-medium">
+                    <a href="dashboard.html" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition">Dashboard</a>
+                    <a href="course.html" class="text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition">Courses</a>
+                </nav>
+            </div>
+            
+            <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                <svg id="moon-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="app-container" class="max-w-7xl mx-auto px-4 py-8">
+        <nav class="flex mb-8 text-sm text-slate-500" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="course.html" class="hover:text-emerald-600 transition">Courses</a></li>
+                <li class="flex items-center space-x-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                    <span id="breadcrumb-current" class="dark:text-slate-300 font-medium">Loading...</span>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Incomplete Profile Banner (Hidden by default) -->
+        <div id="profile-warning" class="hidden mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6 rounded-3xl flex items-center gap-4">
+            <div class="bg-amber-100 dark:bg-amber-900/40 p-3 rounded-full text-amber-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            </div>
+            <div class="flex-grow">
+                <h3 class="font-bold text-amber-900 dark:text-amber-400">Profile Incomplete</h3>
+                <p class="text-sm text-amber-700 dark:text-amber-400/70">You must complete all details in your profile before you can enroll in any courses.</p>
+            </div>
+            <a href="profile.html" class="px-6 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition shadow-lg shadow-amber-600/20">Complete Profile</a>
+        </div>
+
+        <div id="loading-state" class="py-20 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+            <p class="mt-4 text-slate-500">Verifying access...</p>
+        </div>
+
+        <div id="course-content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-emerald-600/10 border border-slate-200 dark:border-slate-800">
+                    <img id="course-banner" src="" alt="Course Image" class="w-full h-80 object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent flex items-end p-8">
+                        <div>
+                            <span id="course-category" class="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full mb-3 inline-block"></span>
+                            <h1 id="course-title" class="text-3xl md:text-4xl font-extrabold text-white leading-tight"></h1>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-4">About this course</h2>
+                    <p id="course-desc" class="text-slate-600 dark:text-slate-400 leading-relaxed"></p>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 sticky top-24 shadow-sm">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Curriculum</h2>
+                        <span id="lesson-count" class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md text-slate-500">0 Lessons</span>
+                    </div>
+
+                    <div id="lesson-list" class="space-y-3 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar"></div>
+
+                    <div id="enrollment-footer" class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-slate-500 text-sm">Course Price</span>
+                            <span id="course-price" class="text-2xl font-bold text-emerald-600"></span>
+                        </div>
+                        <button id="enroll-btn" class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-[0.98]">
+                            Enroll Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-state" class="hidden text-center py-20">
+            <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-8 rounded-3xl inline-block max-w-md">
+                <p class="text-xl font-bold mb-2">Access Restricted</p>
+                <p id="error-message" class="text-sm opacity-80">Please sign in to view course details.</p>
+                <a href="login.html" class="mt-6 inline-block px-6 py-2 bg-red-600 text-white rounded-xl font-bold">Sign In</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CONFIG = {
+            SUPABASE_URL: 'https://pkqpvnrtxtqlngwtfnhy.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcXB2bnJ0eHRxbG5nd3Rmbmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzQxNTUsImV4cCI6MjA4NTk1MDE1NX0.wrYYlIzt1slOXkbUAqAaSI1bA9xJ2N8QhNHSRJIkZR0'
+        };
+
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+
+        function showMessage(msg, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            toast.className = `${bgColor} text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full text-sm font-bold`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-x-full'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        async function init() {
+            const params = new URLSearchParams(window.location.search);
+            let courseId = params.get('id');
+            if (courseId) {
+                sessionStorage.setItem('current_course_id', courseId);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else {
+                courseId = sessionStorage.getItem('current_course_id');
+            }
+            
+            if (!courseId) {
+                showError("No course selected.");
+                return;
+            }
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) {
+                    showError("Please sign in to view this course.");
+                    return;
+                }
+
+                // CHECK STUDENT DATA VALIDATION FOR THE CURRENT USER
+                const { data: student, error: studentError } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                // Validation logic: If no student record exists or ANY field in that specific row is null/empty
+                const isProfileIncomplete = !student || 
+                    Object.values(student).some(val => val === null || val === '');
+
+                // Check Enrollment
+                const { data: enrollment } = await supabaseClient
+                    .from('enrollments')
+                    .select('status')
+                    .eq('course_id', courseId)
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                const enrollmentStatus = enrollment ? enrollment.status : null;
+
+                const { data: course, error: courseError } = await supabaseClient
+                    .from('courses')
+                    .select('*')
+                    .eq('id', courseId)
+                    .single();
+
+                if (courseError || !course) throw new Error('Course not found');
+
+                const { data: lessons } = await supabaseClient
+                    .from('lessons')
+                    .select('*')
+                    .eq('course_id', courseId)
+                    .order('created_at', { ascending: true });
+
+                renderPage(course, lessons || [], enrollmentStatus, user.id, isProfileIncomplete);
+
+            } catch (err) {
+                console.error(err);
+                showError("Something went wrong while loading the course.");
+            }
+        }
+
+        function renderPage(course, lessons, status, userId, isProfileIncomplete) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('course-content').classList.remove('hidden');
+
+            document.getElementById('breadcrumb-current').textContent = course.title;
+            document.getElementById('course-title').textContent = course.title;
+            document.getElementById('course-category').textContent = course.category || 'Professional';
+            document.getElementById('course-banner').src = course.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200';
+            document.getElementById('course-desc').textContent = course.description;
+            
+            const price = course.price > 0 ? `Rs. ${parseFloat(course.price).toLocaleString('en-LK')}` : 'Free';
+            document.getElementById('course-price').textContent = price;
+            document.getElementById('lesson-count').textContent = `${lessons.length} Lessons`;
+
+            const lessonListEl = document.getElementById('lesson-list');
+            const enrollBtn = document.getElementById('enroll-btn');
+
+            if (status === 'approved' || status === 'active') {
+                enrollBtn.textContent = 'Start Learning';
+                enrollBtn.className = 'w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-[0.98]';
+                enrollBtn.onclick = () => {
+                    if (lessons.length > 0) {
+                        sessionStorage.setItem('current_lesson_id', lessons[0].id);
+                        window.location.href = 'player.html';
+                    } else {
+                        showMessage("No lessons available yet.");
+                    }
+                };
+
+                lessonListEl.innerHTML = lessons.map(lesson => `
+                    <div onclick="navigateToLesson('${lesson.id}')" class="group flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-800 transition-all cursor-pointer">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 flex items-center justify-center">
+                            ${getIcon(lesson.lesson_type)}
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">${lesson.title}</h4>
+                            <span class="text-[10px] text-slate-500 font-medium">${lesson.duration || '5 mins'}</span>
+                        </div>
+                        <span class="text-emerald-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
+                    </div>
+                `).join('');
+            } else {
+                // Not Enrolled OR Pending
+                if (isProfileIncomplete) {
+                    document.getElementById('profile-warning').classList.remove('hidden');
+                    enrollBtn.textContent = 'Profile Incomplete';
+                    enrollBtn.disabled = true;
+                    enrollBtn.className = 'w-full py-4 bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-2xl font-bold cursor-not-allowed';
+                } else {
+                    if (status === 'pending' || status === 'pending_approval') {
+                        enrollBtn.innerHTML = 'Proceed to Checkout';
+                        enrollBtn.className = 'w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/30 active:scale-[0.98]';
+                        enrollBtn.onclick = () => window.location.href = `checkout.html?course_id=${course.id}`;
+                    } else {
+                        enrollBtn.onclick = () => handleEnroll(course.id, userId);
+                    }
+                }
+
+                lessonListEl.innerHTML = `
+                    <div class="text-center py-8 px-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Curriculum Locked</h4>
+                        <p class="text-xs text-slate-500 mb-4">${isProfileIncomplete ? 'Complete every field in your profile to unlock enrollment.' : 'Enroll in this course to request access to the curriculum.'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function handleEnroll(courseId, userId) {
+            const btn = document.getElementById('enroll-btn');
+            btn.textContent = 'Sending Request...';
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('enrollments')
+                    .insert([{ user_id: userId, course_id: courseId, status: 'pending' }]);
+                if (error) throw error;
+                showMessage("Request sent! Redirecting to checkout...", "success");
+                setTimeout(() => window.location.href = `checkout.html?course_id=${courseId}`, 1500);
+            } catch (err) {
+                showMessage(err.message || "Enrollment failed.");
+                btn.textContent = 'Enroll Now';
+                btn.disabled = false;
+            }
+        }
+
+        function navigateToLesson(lessonId) {
+            sessionStorage.setItem('current_lesson_id', lessonId);
+            window.location.href = 'player.html';
+        }
+
+        function getIcon(type) {
+            type = (type || 'video').toLowerCase();
+            if (type === 'pdf') return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
+            return `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+            document.getElementById('error-message').textContent = msg;
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        init();
+    </script>
+</body>
+</html>
