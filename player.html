@@ -276,7 +276,7 @@
                 .select('status')
                 .eq('user_id', user.id)
                 .eq('course_id', currentCourseId)
-                .eq('status', 'approved')
+                .eq('status', 'active')
                 .single();
 
             // REPLACEMENT: Show error UI instead of redirecting
