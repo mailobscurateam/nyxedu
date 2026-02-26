@@ -29,6 +29,9 @@
         .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .active-nav { @apply bg-brand-50 text-brand-600 font-bold; }
         
+        .tab-active { @apply border-brand-600 text-brand-600 bg-brand-50/50; }
+        .tab-inactive { @apply border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50; }
+
         body { -webkit-tap-highlight-color: transparent; }
         
         @media (max-width: 768px) {
@@ -107,8 +110,8 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-grow p-4 md:p-10 lg:p-12 transition-all">
+    <!-- Dashboard Container -->
+    <main id="main-dashboard" class="flex-grow p-4 md:p-10 lg:p-12 transition-all">
         <div class="max-w-7xl mx-auto">
             <!-- Header Section -->
             <div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
@@ -171,60 +174,76 @@
         </div>
     </main>
 
-    <!-- Modal for Course Editing -->
-    <div id="course-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-0 md:p-4">
-        <div class="modal-overlay absolute inset-0 bg-slate-950/70 backdrop-blur-md" onclick="closeCourseModal()"></div>
-        <div class="modal-content relative bg-white w-full md:max-w-5xl md:h-auto h-full md:rounded-[2rem] flex flex-col overflow-hidden opacity-0 scale-95 transition-all">
-            <div class="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur sticky top-0 z-10">
+    <!-- Course Studio (Hidden by default) -->
+    <main id="course-studio" class="hidden flex-grow flex flex-col h-screen overflow-hidden">
+        <!-- Studio Header -->
+        <div class="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-20">
+            <div class="flex items-center gap-4">
+                <button onclick="exitStudio()" class="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                </button>
                 <div>
-                    <h3 id="modal-heading" class="text-xl font-black text-slate-900">Manage Course</h3>
-                    <p class="text-slate-400 text-[10px] uppercase font-bold tracking-widest mt-0.5">Catalog Editor</p>
+                    <h2 id="studio-course-title" class="font-black text-slate-900 leading-none">Course Title</h2>
+                    <p class="text-[10px] text-brand-600 font-bold uppercase tracking-widest mt-1">Course Studio Editor</p>
                 </div>
-                <button onclick="closeCourseModal()" class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <button onclick="saveCourseStudio()" id="studio-save-btn" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-black rounded-xl shadow-lg shadow-brand-500/20 transition-all active:scale-95">SAVE CHANGES</button>
+        </div>
+
+        <!-- Studio Menu -->
+        <div class="bg-white border-b border-slate-200 px-6">
+            <div class="flex gap-4">
+                <button onclick="setStudioTab('details')" id="tab-details" class="py-4 px-2 border-b-2 text-xs font-black uppercase tracking-wider transition-all tab-active">
+                    Course Settings
+                </button>
+                <button onclick="setStudioTab('lessons')" id="tab-lessons" class="py-4 px-2 border-b-2 text-xs font-black uppercase tracking-wider transition-all tab-inactive">
+                    Curriculum Editor
                 </button>
             </div>
-            
-            <div class="flex-grow overflow-y-auto p-5 md:p-8 custom-scrollbar">
-                <form id="course-form" class="space-y-8">
-                    <input type="hidden" id="edit-course-id">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Course Title</label>
-                            <input type="text" id="course-title" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="e.g. Advanced Quantum Mechanics">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Price (LKR)</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-bold">Rs.</span>
-                                <input type="number" id="course-price" required class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="0.00">
+        </div>
+
+        <!-- Studio Content -->
+        <div class="flex-grow overflow-y-auto custom-scrollbar p-6 md:p-12 bg-slate-50">
+            <div class="max-w-4xl mx-auto">
+                <form id="studio-form">
+                    <input type="hidden" id="studio-course-id">
+                    
+                    <!-- Details Section -->
+                    <div id="studio-section-details" class="space-y-8 animate-in fade-in duration-300">
+                        <div class="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm space-y-6">
+                            <h3 class="text-lg font-black text-slate-900">General Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Course Title</label>
+                                    <input type="text" id="studio-title" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="e.g. Advanced AI">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Price (LKR)</label>
+                                    <input type="number" id="studio-price" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="0.00">
+                                </div>
+                                <div class="md:col-span-2 space-y-2">
+                                    <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Cover Image URL</label>
+                                    <input type="url" id="studio-thumbnail" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="https://...">
+                                </div>
                             </div>
-                        </div>
-                        <div class="md:col-span-2 space-y-2">
-                            <label class="text-[10px] font-black uppercase text-slate-400 tracking-wider">Thumbnail Image URL</label>
-                            <input type="url" id="course-thumbnail" required class="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:ring-4 ring-brand-500/10 focus:border-brand-500 outline-none transition-all text-sm" placeholder="https://images.unsplash.com/...">
                         </div>
                     </div>
-                    
-                    <div class="pt-8 border-t border-slate-100">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+
+                    <!-- Lessons Section -->
+                    <div id="studio-section-lessons" class="hidden space-y-8 animate-in fade-in duration-300">
+                        <div class="flex justify-between items-center px-2">
                             <div>
-                                <h4 class="text-sm font-black uppercase tracking-widest text-slate-900">Curriculum</h4>
-                                <p class="text-[10px] text-slate-400 mt-1">Add or reorder lessons for this course</p>
+                                <h3 class="text-lg font-black text-slate-900">Module Curriculum</h3>
+                                <p class="text-xs text-slate-400">Add, edit, or remove video lessons from this course.</p>
                             </div>
-                            <button type="button" onclick="addLessonRow()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-[10px] font-black rounded-xl transition-transform active:scale-95 shadow-md shadow-brand-500/20">ADD NEW LESSON</button>
+                            <button type="button" onclick="addLessonRow()" class="px-5 py-2.5 bg-slate-900 text-white text-[10px] font-black rounded-xl hover:bg-slate-800 transition-all">ADD LESSON</button>
                         </div>
                         <div id="lessons-container" class="space-y-4"></div>
                     </div>
                 </form>
             </div>
-            
-            <div class="p-5 md:p-6 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3 bg-white">
-                <button onclick="closeCourseModal()" class="order-2 sm:order-1 w-full sm:w-auto px-6 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50 rounded-xl transition-colors">Discard</button>
-                <button type="submit" form="course-form" id="save-course-btn" class="order-1 sm:order-2 w-full sm:w-auto px-10 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-black rounded-xl shadow-xl shadow-brand-500/25 transition-all active:scale-95">Save Changes</button>
-            </div>
         </div>
-    </div>
+    </main>
 
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 right-6 left-6 md:left-auto px-6 py-4 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 translate-y-10 transition-all z-[200] flex items-center gap-3">
@@ -238,12 +257,16 @@
         let currentView = 'approvals';
         let currentAdminId = null;
 
+        // Elements
         const tableBody = document.getElementById('table-body');
         const tableHead = document.getElementById('table-head');
         const emptyState = document.getElementById('empty-state');
         const adminBody = document.getElementById('admin-body');
         const viewActions = document.getElementById('view-actions');
+        const mainDashboard = document.getElementById('main-dashboard');
+        const courseStudio = document.getElementById('course-studio');
 
+        // Sidebar logic
         const mobileToggle = document.getElementById('mobile-menu-toggle');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebar-overlay');
@@ -283,6 +306,7 @@
 
         function switchView(view) {
             currentView = view;
+            exitStudio(); // Ensure studio is closed when switching major views
             if (window.innerWidth < 768) toggleMobileMenu(false);
 
             document.querySelectorAll('aside nav button').forEach(btn => btn.classList.remove('active-nav'));
@@ -302,7 +326,7 @@
                 title.innerText = "Course Catalog";
                 desc.innerText = "Management suite for academic content.";
                 tableTitle.innerText = "Course Library";
-                viewActions.innerHTML = `<button onclick="openCourseModal()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-600 text-white text-xs font-black rounded-xl shadow-lg transition-transform active:scale-95">NEW COURSE</button>`;
+                viewActions.innerHTML = `<button onclick="enterStudio()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-600 text-white text-xs font-black rounded-xl shadow-lg transition-transform active:scale-95">NEW COURSE</button>`;
                 fetchCourses();
             } else if (view === 'users') {
                 title.innerText = "Student Directory";
@@ -312,202 +336,185 @@
             }
         }
 
-        async function fetchEnrollments() {
-            tableHead.innerHTML = `
-                <tr class="text-[10px] uppercase text-slate-400 border-b">
-                    <th class="px-6 py-4">Student</th>
-                    <th class="px-6 py-4">Course</th>
-                    <th class="px-6 py-4">Status</th>
-                    <th class="px-6 py-4 text-right">Action</th>
-                </tr>`;
-            tableBody.innerHTML = `<tr><td colspan="4" class="py-20 text-center animate-pulse text-slate-400">Fetching records...</td></tr>`;
+        // Studio Navigation
+        function setStudioTab(tab) {
+            const tabs = ['details', 'lessons'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const section = document.getElementById(`studio-section-${t}`);
+                if (t === tab) {
+                    btn.classList.replace('tab-inactive', 'tab-active');
+                    section.classList.remove('hidden');
+                } else {
+                    btn.classList.replace('tab-active', 'tab-inactive');
+                    section.classList.add('hidden');
+                }
+            });
+        }
+
+        async function enterStudio(courseId = null) {
+            mainDashboard.classList.add('hidden');
+            sidebar.classList.add('md:hidden');
+            courseStudio.classList.remove('hidden');
             
-            // Showing all records from the enrollments table
-            const { data, error } = await supabaseClient
-                .from('enrollments')
-                .select('*, courses(title), students(full_name)')
-                .order('created_at', { ascending: false });
+            // Reset form
+            document.getElementById('studio-form').reset();
+            document.getElementById('lessons-container').innerHTML = '';
+            document.getElementById('studio-course-id').value = courseId || '';
+            setStudioTab('details');
 
-            if (error || !data?.length) { 
-                tableBody.innerHTML = ''; 
-                emptyState.classList.remove('hidden'); 
-                return; 
+            if (courseId) {
+                const { data: course } = await supabaseClient.from('courses').select('*').eq('id', courseId).single();
+                const { data: lessons } = await supabaseClient.from('lessons').select('*').eq('course_id', courseId).order('order_index', { ascending: true });
+                
+                if (course) {
+                    document.getElementById('studio-course-title').innerText = course.title;
+                    document.getElementById('studio-title').value = course.title;
+                    document.getElementById('studio-price').value = course.price;
+                    document.getElementById('studio-thumbnail').value = course.thumbnail;
+                }
+                lessons?.forEach(l => addLessonRow(l));
+            } else {
+                document.getElementById('studio-course-title').innerText = "Create New Course";
+                addLessonRow();
             }
-            emptyState.classList.add('hidden');
+        }
 
+        function exitStudio() {
+            courseStudio.classList.add('hidden');
+            mainDashboard.classList.remove('hidden');
+            sidebar.classList.remove('md:hidden');
+            if (currentView === 'courses') fetchCourses();
+        }
+
+        // CRUD Logic
+        async function fetchEnrollments() {
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b"><th class="px-6 py-4">Student</th><th class="px-6 py-4">Course</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
+            const { data } = await supabaseClient.from('enrollments').select('*, courses(title), students(full_name)').order('created_at', { ascending: false });
+            if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
+            emptyState.classList.add('hidden');
             tableBody.innerHTML = data.map(row => {
                 const isPending = row.status === 'pending' || row.status === 'pending_approval';
-                let statusClass = 'bg-slate-50 text-slate-600';
-                if (row.status === 'active') statusClass = 'bg-emerald-50 text-emerald-600';
-                if (row.status === 'rejected') statusClass = 'bg-red-50 text-red-600';
-                if (isPending) statusClass = 'bg-amber-50 text-amber-600';
-
-                return `
-                <tr class="border-b hover:bg-slate-50/50 transition-colors">
-                    <td data-label="Student" class="px-6 py-4">
-                        <div class="flex flex-col">
-                            <span class="text-sm font-bold text-slate-900">${row.students?.full_name || 'Anonymous'}</span>
-                            <span class="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">${row.user_id?.substring(0,8) || 'N/A'}</span>
-                        </div>
-                    </td>
-                    <td data-label="Course" class="px-6 py-4 text-sm font-medium text-slate-600">${row.courses?.title || 'Deleted Course'}</td>
-                    <td data-label="Status" class="px-6 py-4">
-                        <span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${statusClass}">
-                            ${row.status}
-                        </span>
-                    </td>
+                let sClass = 'bg-slate-50 text-slate-600';
+                if (row.status === 'active') sClass = 'bg-emerald-50 text-emerald-600';
+                if (isPending) sClass = 'bg-amber-50 text-amber-600';
+                return `<tr class="border-b hover:bg-slate-50/50 transition-colors">
+                    <td data-label="Student" class="px-6 py-4"><span class="text-sm font-bold text-slate-900">${row.students?.full_name || 'User'}</span></td>
+                    <td data-label="Course" class="px-6 py-4 text-sm text-slate-600">${row.courses?.title || 'Course'}</td>
+                    <td data-label="Status" class="px-6 py-4"><span class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${sClass}">${row.status}</span></td>
                     <td data-label="Action" class="px-6 py-4 text-right">
-                        ${isPending ? `
-                            <div class="flex justify-end gap-2">
-                                <button onclick="updateEnrollmentStatus('${row.id}', 'active')" class="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors" title="Approve"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>
-                                <button onclick="updateEnrollmentStatus('${row.id}', 'rejected')" class="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Reject"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-                            </div>
-                        ` : `<span class="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">${row.status === 'active' ? 'Confirmed' : 'Resolved'}</span>`}
+                        ${isPending ? `<button onclick="updateEnrollmentStatus('${row.id}', 'active')" class="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100">APPROVE</button>` : `<span class="text-[10px] text-slate-300 uppercase">Settled</span>`}
                     </td>
                 </tr>`;
             }).join('');
         }
 
-        async function updateEnrollmentStatus(id, status) {
-            const { error } = await supabaseClient.from('enrollments').update({ status }).eq('id', id);
-            if (!error) {
-                showToast(`Enrollment ${status} successfully.`);
-                fetchEnrollments();
-                fetchStats();
-            } else {
-                showToast("Error updating status.");
-            }
-        }
-
         async function fetchCourses() {
-            tableHead.innerHTML = `
-                <tr class="text-[10px] uppercase text-slate-400 border-b">
-                    <th class="px-6 py-4">Course Info</th>
-                    <th class="px-6 py-4">Price</th>
-                    <th class="px-6 py-4 text-right">Settings</th>
-                </tr>`;
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b"><th class="px-6 py-4">Course</th><th class="px-6 py-4">Price</th><th class="px-6 py-4 text-right">Settings</th></tr>`;
             const { data } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
-
-            tableBody.innerHTML = data.map(c => `
-                <tr class="border-b hover:bg-slate-50/50 transition-colors">
-                    <td data-label="Course" class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <img src="${c.thumbnail}" class="w-10 h-10 rounded-lg object-cover hidden sm:block bg-slate-100" onerror="this.src='https://placehold.co/100x100?text=Course'">
-                            <span class="text-sm font-bold text-slate-900">${c.title}</span>
-                        </div>
-                    </td>
-                    <td data-label="Price" class="px-6 py-4 text-sm font-mono text-slate-600">Rs. ${c.price.toLocaleString()}</td>
-                    <td data-label="Settings" class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-1">
-                            <button onclick="openCourseModal('${c.id}')" class="text-brand-600 text-xs font-black hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-all">EDIT</button>
-                            <button onclick="deleteCourse('${c.id}')" class="text-red-500 text-xs font-black hover:bg-red-50 px-3 py-1.5 rounded-lg transition-all">DELETE</button>
-                        </div>
-                    </td>
-                </tr>`).join('');
-        }
-
-        async function openCourseModal(courseId = null) {
-            const modal = document.getElementById('course-modal');
-            const container = document.getElementById('lessons-container');
-            document.getElementById('course-form').reset();
-            container.innerHTML = '';
-            document.getElementById('edit-course-id').value = courseId || '';
-            document.getElementById('modal-heading').innerText = courseId ? 'Edit Course' : 'Create Course';
-
-            if (courseId) {
-                const { data: course } = await supabaseClient.from('courses').select('*').eq('id', courseId).single();
-                const { data: lessons } = await supabaseClient.from('lessons').select('*').eq('course_id', courseId).order('order_index', { ascending: true });
-                if (course) {
-                    document.getElementById('course-title').value = course.title;
-                    document.getElementById('course-price').value = course.price;
-                    document.getElementById('course-thumbnail').value = course.thumbnail;
-                }
-                lessons?.forEach(l => addLessonRow(l));
-            } else { addLessonRow(); }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => modal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95'), 10);
-        }
-
-        function closeCourseModal() {
-            const modal = document.getElementById('course-modal');
-            modal.querySelector('.modal-content').classList.add('opacity-0', 'scale-95');
-            document.body.style.overflow = '';
-            setTimeout(() => modal.classList.add('hidden'), 300);
+            tableBody.innerHTML = data.map(c => `<tr class="border-b hover:bg-slate-50/50">
+                <td data-label="Course" class="px-6 py-4"><span class="text-sm font-bold text-slate-900">${c.title}</span></td>
+                <td data-label="Price" class="px-6 py-4 text-sm font-mono">Rs. ${c.price.toLocaleString()}</td>
+                <td data-label="Settings" class="px-6 py-4 text-right">
+                    <button onclick="enterStudio('${c.id}')" class="text-brand-600 text-xs font-black hover:bg-brand-50 px-3 py-1.5 rounded-lg">EDIT</button>
+                </td>
+            </tr>`).join('');
         }
 
         function addLessonRow(lesson = null) {
             const container = document.getElementById('lessons-container');
             const id = 'l-' + Math.random().toString(36).substr(2, 9);
             const div = document.createElement('div');
-            div.className = "p-5 bg-slate-50 rounded-2xl border border-slate-200 relative group transition-all hover:border-brand-300";
+            div.className = "p-6 bg-white rounded-2xl border border-slate-200 relative group transition-all hover:border-brand-300";
             div.id = id;
-            
-            const instructorValue = lesson?.instructor || currentAdminId || '';
-
             div.innerHTML = `
                 <input type="hidden" class="lesson-id" value="${lesson?.id || ''}">
-                <button type="button" onclick="removeLessonRow('${id}', '${lesson?.id || ''}')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors p-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                <button type="button" onclick="document.getElementById('${id}').remove()" class="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div class="space-y-1.5">
-                        <label class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Lesson Name</label>
-                        <input type="text" class="lesson-title w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:ring-4 ring-brand-500/5 transition-all" placeholder="Introduction" value="${lesson?.title || ''}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Lesson Name</label>
+                        <input type="text" class="lesson-title w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2 ring-brand-500/10" placeholder="Introduction" value="${lesson?.title || ''}">
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Duration</label>
-                        <input type="text" class="lesson-duration w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:ring-4 ring-brand-500/5 transition-all" placeholder="12:45" value="${lesson?.duration || ''}">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Duration</label>
+                        <input type="text" class="lesson-duration w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2 ring-brand-500/10" placeholder="10:00" value="${lesson?.duration || ''}">
                     </div>
-                    <div class="space-y-1.5 md:col-span-2">
-                        <label class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Learning Objectives</label>
-                        <textarea class="lesson-desc w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:ring-4 ring-brand-500/5 transition-all min-h-[80px]" placeholder="By the end of this lesson...">${lesson?.description || ''}</textarea>
+                    <div class="md:col-span-2 space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Resource/Video URL</label>
+                        <input type="text" class="lesson-video w-full px-3 py-2 text-sm rounded-lg border outline-none focus:ring-2 ring-brand-500/10" value="${lesson?.video_url || ''}">
                     </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Resource URL</label>
-                        <input type="text" class="lesson-video w-full px-3 py-2.5 text-sm rounded-lg border outline-none focus:ring-4 ring-brand-500/5 transition-all" placeholder="YouTube/Drive Link" value="${lesson?.video_url || ''}">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Instructor ID</label>
-                        <input type="text" class="lesson-instructor w-full px-3 py-2.5 text-sm font-mono rounded-lg border outline-none focus:ring-4 ring-brand-500/5 transition-all" value="${instructorValue}">
-                    </div>
-                </div>
-            `;
+                </div>`;
             container.appendChild(div);
         }
 
+        async function saveCourseStudio() {
+            const btn = document.getElementById('studio-save-btn');
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
+            const courseId = document.getElementById('studio-course-id').value;
+            const courseData = {
+                title: document.getElementById('studio-title').value,
+                price: parseFloat(document.getElementById('studio-price').value),
+                thumbnail: document.getElementById('studio-thumbnail').value,
+            };
+
+            try {
+                let id = courseId;
+                if (courseId) {
+                    await supabaseClient.from('courses').update(courseData).eq('id', courseId);
+                } else {
+                    const { data } = await supabaseClient.from('courses').insert(courseData).select().single();
+                    id = data.id;
+                }
+
+                // Simplified lessons save (logic to delete and re-insert is often safer for dynamic lists)
+                if (id) {
+                    const lessonNodes = document.querySelectorAll('#lessons-container > div');
+                    const lessons = Array.from(lessonNodes).map((node, index) => ({
+                        course_id: id,
+                        title: node.querySelector('.lesson-title').value,
+                        duration: node.querySelector('.lesson-duration').value,
+                        video_url: node.querySelector('.lesson-video').value,
+                        order_index: index,
+                        instructor: currentAdminId
+                    }));
+
+                    // In a production app, you'd manage IDs carefully; here we'll update or insert.
+                    await supabaseClient.from('lessons').delete().eq('course_id', id);
+                    await supabaseClient.from('lessons').insert(lessons);
+                }
+
+                showToast("Course synchronized successfully.");
+                exitStudio();
+            } catch (e) {
+                showToast("Error saving course data.");
+            } finally {
+                btn.innerText = "SAVE CHANGES";
+                btn.disabled = false;
+            }
+        }
+
         async function fetchStudents() {
-            tableHead.innerHTML = `
-                <tr class="text-[10px] uppercase text-slate-400 border-b">
-                    <th class="px-6 py-4">Name & Identity</th>
-                    <th class="px-6 py-4">Email Address</th>
-                    <th class="px-6 py-4 text-right">Registered</th>
-                </tr>`;
+            tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b"><th class="px-6 py-4">Student</th><th class="px-6 py-4">Email</th><th class="px-6 py-4 text-right">Joined</th></tr>`;
             const { data } = await supabaseClient.from('students').select('*').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(s => `
-                <tr class="border-b hover:bg-slate-50/50 transition-colors">
-                    <td data-label="Student" class="px-6 py-4">
-                        <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs">${s.full_name?.charAt(0) || '?'}</div>
-                            <span class="text-sm font-bold text-slate-900">${s.full_name || 'No Name'}</span>
-                        </div>
-                    </td>
-                    <td data-label="Email" class="px-6 py-4 text-sm text-slate-500">${s.email}</td>
-                    <td data-label="Date" class="px-6 py-4 text-right text-[10px] font-mono text-slate-400">${new Date(s.created_at).toLocaleDateString()}</td>
-                </tr>`).join('');
+            tableBody.innerHTML = data.map(s => `<tr class="border-b hover:bg-slate-50/50">
+                <td data-label="Student" class="px-6 py-4 text-sm font-bold">${s.full_name || 'Anonymous'}</td>
+                <td data-label="Email" class="px-6 py-4 text-sm text-slate-500">${s.email}</td>
+                <td data-label="Joined" class="px-6 py-4 text-right text-[10px] font-mono text-slate-400">${new Date(s.created_at).toLocaleDateString()}</td>
+            </tr>`).join('');
         }
 
         async function fetchStats() {
             const { count: s } = await supabaseClient.from('students').select('*', { count: 'exact', head: true });
             const { count: c } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
             const { count: a } = await supabaseClient.from('enrollments').select('*', { count: 'exact', head: true }).eq('status', 'active');
-            
             document.getElementById('stat-students').innerText = s || 0;
             document.getElementById('stat-courses').innerText = c || 0;
             document.getElementById('stat-active').innerText = a || 0;
@@ -515,22 +522,14 @@
 
         function showToast(msg) {
             const t = document.getElementById('toast');
-            const m = document.getElementById('toast-msg');
-            m.innerText = msg;
+            document.getElementById('toast-msg').innerText = msg;
             t.classList.remove('opacity-0', 'translate-y-10');
             t.classList.add('opacity-100', 'translate-y-0');
             setTimeout(() => {
                 t.classList.add('opacity-0', 'translate-y-10');
                 t.classList.remove('opacity-100', 'translate-y-0');
-            }, 3500);
+            }, 3000);
         }
-
-        document.getElementById('refresh-btn').addEventListener('click', () => {
-            const btn = document.getElementById('refresh-btn');
-            btn.classList.add('animate-spin');
-            switchView(currentView);
-            setTimeout(() => btn.classList.remove('animate-spin'), 1000);
-        });
 
         document.getElementById('logout-btn').addEventListener('click', async () => { 
             await supabaseClient.auth.signOut(); 
