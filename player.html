@@ -113,17 +113,18 @@
 
     <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition">
+            <div class="flex items-center gap-4 flex-1 overflow-hidden">
+                <a href="dashboard.html" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                 </a>
-                <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-black text-lg">E</span>
+                <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0"></div>
+                <div class="flex flex-col min-w-0">
+                    <span id="nav-course-title" class="text-sm font-black truncate text-emerald-600 uppercase tracking-tighter">Loading Course...</span>
+                    <span id="nav-lesson-title" class="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Select Lesson</span>
                 </div>
-                <h1 class="text-lg font-black uppercase tracking-tighter hidden md:block">Edu<span class="text-emerald-600">Stream</span></h1>
             </div>
             
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 shrink-0 ml-4">
                 <button id="theme-toggle" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                 </button>
@@ -196,8 +197,12 @@
                 <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
                         <div class="flex-1">
-                            <h2 id="lesson-title" class="text-2xl font-black mb-1">Lesson Title</h2>
-                            <p id="course-title" class="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-4">Course Name</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded text-[10px] font-black uppercase tracking-widest">Active Lesson</span>
+                                <div class="h-1 w-1 bg-slate-300 rounded-full"></div>
+                                <span id="course-label" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Course Player</span>
+                            </div>
+                            <h2 id="lesson-title" class="text-3xl font-black mb-4">Lesson Title</h2>
                             <div id="resource-box" class="hidden flex items-center gap-3 mb-6">
                                 <a id="resource-link" href="#" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-emerald-50 transition border border-transparent hover:border-emerald-200">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -209,6 +214,7 @@
                             Mark as Complete
                         </button>
                     </div>
+                    <div class="h-[1px] w-full bg-slate-100 dark:bg-slate-800 mb-6"></div>
                     <div id="lesson-description" class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
                         Loading lesson details...
                     </div>
@@ -218,12 +224,12 @@
             <div class="lg:col-span-1">
                 <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm sticky top-24">
                     <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-                        <h3 class="font-black text-lg">Course Content</h3>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div id="sidebar-progress-bar" class="h-full bg-emerald-600 transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                            <span id="sidebar-pct" class="text-[10px] font-bold text-slate-400">0%</span>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-black text-lg">Course Content</h3>
+                            <span id="sidebar-pct" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded">0%</span>
+                        </div>
+                        <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div id="sidebar-progress-bar" class="h-full bg-emerald-600 transition-all duration-500" style="width: 0%"></div>
                         </div>
                     </div>
                     <div id="lesson-list" class="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
@@ -275,7 +281,7 @@
             watermarkText.textContent = `${user.email.split('@')[0]}`;
 
             await loadCourseData();
-            await loadLessons(); // This now handles the primary data fetch and default lesson selection
+            await loadLessons(); 
             setupControls();
         }
 
@@ -349,27 +355,25 @@
                 .select('title')
                 .eq('id', currentCourseId)
                 .single();
-            if (course) document.getElementById('course-title').textContent = course.title;
+            if (course) {
+                document.getElementById('nav-course-title').textContent = course.title;
+                document.getElementById('course-label').textContent = course.title;
+            }
         }
 
-        /**
-         * Fetches all lessons for the current course and user progress
-         */
         async function loadLessons() {
-            // 1. Fetch lessons strictly by courseID
             const { data: lessons, error: lessonError } = await supabaseClient
                 .from('lessons')
                 .select('*')
                 .eq('course_id', currentCourseId)
-                .order('section', { ascending: true }) // Order by section
-                .order('created_at', { ascending: true }); // Then by date within section
+                .order('section', { ascending: true }) 
+                .order('created_at', { ascending: true });
 
             if (lessonError) {
                 console.error("Error loading lessons:", lessonError);
                 return;
             }
 
-            // 2. Fetch User Progress
             const { data: progress } = await supabaseClient
                 .from('user_progress')
                 .select('lesson_id, completed')
@@ -377,15 +381,12 @@
 
             const completedMap = new Set(progress?.filter(p => p.completed).map(p => p.lesson_id));
             
-            // 3. Update Progress UI
             const pct = (lessons && lessons.length > 0) ? Math.round((completedMap.size / lessons.length) * 100) : 0;
             document.getElementById('sidebar-progress-bar').style.width = `${pct}%`;
             document.getElementById('sidebar-pct').textContent = `${pct}%`;
 
-            // 4. Render Lesson List
             const listContainer = document.getElementById('lesson-list');
             if (lessons && lessons.length > 0) {
-                // Determine which lesson should be active
                 if (!currentLessonId) {
                     currentLessonId = lessons[0].id;
                     sessionStorage.setItem('current_lesson_id', currentLessonId);
@@ -408,9 +409,9 @@
                     `;
                 }).join('');
 
-                // 5. Render the actual player content for the active lesson
                 const activeLesson = lessons.find(l => l.id === currentLessonId);
                 if (activeLesson) {
+                    document.getElementById('nav-lesson-title').textContent = activeLesson.title;
                     renderPlayer(activeLesson, completedMap.has(currentLessonId));
                 }
             } else {
