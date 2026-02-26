@@ -64,14 +64,14 @@
             </ol>
         </nav>
 
-        <!-- Incomplete Profile Banner -->
+        <!-- Profile Warning Banner -->
         <div id="profile-warning" class="hidden mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6 rounded-3xl flex items-center gap-4">
             <div class="bg-amber-100 dark:bg-amber-900/40 p-3 rounded-full text-amber-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
             <div class="flex-grow">
                 <h3 class="font-bold text-amber-900 dark:text-amber-400">Profile Incomplete</h3>
-                <p class="text-sm text-amber-700 dark:text-amber-400/70">You must complete all details in your profile before you can enroll in any courses.</p>
+                <p class="text-sm text-amber-700 dark:text-amber-400/70">You must complete all details in your profile (name, phone, address, etc.) before you can enroll in any courses.</p>
             </div>
             <a href="profile.html" class="px-6 py-2 bg-amber-600 text-white rounded-xl font-bold text-sm hover:bg-amber-700 transition shadow-lg shadow-amber-600/20">Complete Profile</a>
         </div>
@@ -141,7 +141,6 @@
 
         function showMessage(msg, type = 'error') {
             const container = document.getElementById('toast-container');
-            if(!container) return;
             const toast = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
             toast.className = `${bgColor} text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full text-sm font-bold`;
@@ -174,7 +173,7 @@
                     return;
                 }
 
-                // 1. Fetch Course Details
+                // Fetch Course Details
                 const { data: course, error: courseError } = await supabaseClient
                     .from('courses')
                     .select('*')
@@ -193,26 +192,26 @@
 
                 activeCourseData = course; 
 
-                // 2. CHECK PROFILE COMPLETION (FIXED LOGIC)
-                const { data: student, error: studentError } = await supabaseClient
+                // CHECK PROFILE COMPLETION LOGIC
+                // Logic: Search by user's email. If any column value is null/empty, profile is incomplete.
+                const { data: student, error: studentErr } = await supabaseClient
                     .from('students')
-                    .select('full_name, email, phone')
-                    .eq('id', user.id)
+                    .select('*')
+                    .eq('email', user.email)
                     .maybeSingle();
 
-                // Logic: A profile is incomplete ONLY if the record is missing OR required fields are null/empty/whitespace
                 let isProfileIncomplete = false;
+                
                 if (!student) {
+                    // No student record found for this email at all
                     isProfileIncomplete = true;
                 } else {
-                    const requiredFields = ['full_name', 'email', 'phone'];
-                    isProfileIncomplete = requiredFields.some(field => {
-                        const val = student[field];
-                        return val === null || val === undefined || String(val).trim() === '';
-                    });
+                    // Check if ANY column in the student object is null or empty string
+                    // This covers name, phone, address, etc.
+                    isProfileIncomplete = Object.values(student).some(value => value === null || value === '');
                 }
 
-                // 3. Check Enrollment
+                // Check Enrollment
                 const { data: enrollment } = await supabaseClient
                     .from('enrollments')
                     .select('status')
@@ -222,7 +221,7 @@
 
                 const enrollmentStatus = enrollment ? enrollment.status : null;
 
-                // 4. Fetch Lessons
+                // Fetch Lessons
                 const { data: lessons } = await supabaseClient
                     .from('lessons')
                     .select('*')
@@ -232,7 +231,7 @@
                 renderPage(course, lessons || [], enrollmentStatus, user.id, isProfileIncomplete);
 
             } catch (err) {
-                console.error("Init Error:", err);
+                console.error(err);
                 showError("Something went wrong while loading the course content.");
             }
         }
@@ -253,11 +252,6 @@
 
             const lessonListEl = document.getElementById('lesson-list');
             const enrollBtn = document.getElementById('enroll-btn');
-            const warningEl = document.getElementById('profile-warning');
-
-            // Reset UI states
-            warningEl.classList.add('hidden');
-            enrollBtn.disabled = false;
 
             if (status === 'approved' || status === 'active') {
                 enrollBtn.textContent = 'Start Learning';
@@ -283,9 +277,8 @@
                     </div>
                 `).join('');
             } else {
-                // If profile is incomplete AND user is not already enrolled/approved
                 if (isProfileIncomplete) {
-                    warningEl.classList.remove('hidden');
+                    document.getElementById('profile-warning').classList.remove('hidden');
                     enrollBtn.textContent = 'Profile Incomplete';
                     enrollBtn.disabled = true;
                     enrollBtn.className = 'w-full py-4 bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-2xl font-bold cursor-not-allowed';
@@ -295,8 +288,6 @@
                         enrollBtn.className = 'w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/30 active:scale-[0.98]';
                         enrollBtn.onclick = () => window.location.href = `checkout.html?course_id=${course.id}`;
                     } else {
-                        enrollBtn.textContent = 'Enroll Now';
-                        enrollBtn.className = 'w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-[0.98]';
                         enrollBtn.onclick = () => handleEnroll(course.id, userId);
                     }
                 }
@@ -313,7 +304,6 @@
 
         async function handleEnroll(courseId, userId) {
             const btn = document.getElementById('enroll-btn');
-            const originalText = btn.textContent;
             btn.textContent = 'Sending Request...';
             btn.disabled = true;
 
@@ -326,7 +316,7 @@
                 setTimeout(() => window.location.href = `checkout.html?course_id=${courseId}`, 1500);
             } catch (err) {
                 showMessage(err.message || "Enrollment failed.");
-                btn.textContent = originalText;
+                btn.textContent = 'Enroll Now';
                 btn.disabled = false;
             }
         }
