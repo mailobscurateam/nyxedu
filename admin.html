@@ -167,12 +167,8 @@
     <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all z-[101]"></div>
 
     <!-- Note: Make sure config and logic is linked to your actual supabase setup -->
+    <script src="supabase.js"></script>
     <script>
-        // Placeholder for supabase.js logic
-        // const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-        
-        // Mock currentAdminId for logic consistency
-        let currentAdminId = null;
         let currentView = 'approvals';
 
         const tableBody = document.getElementById('table-body');
