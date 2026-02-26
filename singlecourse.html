@@ -135,13 +135,13 @@
 
     <script src="supabase.js"></script>
     <script>
-        // Use a consistent key for storage
         const STORAGE_KEY = 'edu_current_course_id';
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
         let activeCourseData = null;
 
         function showMessage(msg, type = 'error') {
             const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
             const bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
             toast.className = `${bgColor} text-white px-6 py-3 rounded-xl shadow-lg transform transition-all duration-300 translate-x-full text-sm font-bold`;
@@ -158,8 +158,6 @@
             const params = new URLSearchParams(window.location.search);
             const urlId = params.get('id');
             const storedId = sessionStorage.getItem(STORAGE_KEY);
-            
-            // PRIORITY: Use URL ID if available, otherwise fallback to storage
             const courseId = urlId || storedId;
             
             if (!courseId) {
@@ -167,7 +165,6 @@
                 return;
             }
 
-            // Persistence: Always update storage with the latest ID used
             sessionStorage.setItem(STORAGE_KEY, courseId);
 
             try {
@@ -177,7 +174,7 @@
                     return;
                 }
 
-                // Fetch Course Details first to verify existence
+                // 1. Fetch Course Details
                 const { data: course, error: courseError } = await supabaseClient
                     .from('courses')
                     .select('*')
@@ -189,7 +186,6 @@
                     return;
                 }
 
-                // If fetch is successful, we can safely clean the URL without losing context
                 if (urlId) {
                     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                     window.history.replaceState({path: newUrl}, '', newUrl);
@@ -197,17 +193,26 @@
 
                 activeCourseData = course; 
 
-                // Check Profile Completion
-                const { data: student } = await supabaseClient
+                // 2. CHECK PROFILE COMPLETION (FIXED LOGIC)
+                const { data: student, error: studentError } = await supabaseClient
                     .from('students')
-                    .select('*')
+                    .select('full_name, email, phone')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                const isProfileIncomplete = !student || 
-                    ['full_name', 'email', 'phone'].some(field => !student[field]);
+                // Logic: A profile is incomplete ONLY if the record is missing OR required fields are null/empty/whitespace
+                let isProfileIncomplete = false;
+                if (!student) {
+                    isProfileIncomplete = true;
+                } else {
+                    const requiredFields = ['full_name', 'email', 'phone'];
+                    isProfileIncomplete = requiredFields.some(field => {
+                        const val = student[field];
+                        return val === null || val === undefined || String(val).trim() === '';
+                    });
+                }
 
-                // Check Enrollment
+                // 3. Check Enrollment
                 const { data: enrollment } = await supabaseClient
                     .from('enrollments')
                     .select('status')
@@ -217,7 +222,7 @@
 
                 const enrollmentStatus = enrollment ? enrollment.status : null;
 
-                // Fetch Lessons
+                // 4. Fetch Lessons
                 const { data: lessons } = await supabaseClient
                     .from('lessons')
                     .select('*')
@@ -227,7 +232,7 @@
                 renderPage(course, lessons || [], enrollmentStatus, user.id, isProfileIncomplete);
 
             } catch (err) {
-                console.error(err);
+                console.error("Init Error:", err);
                 showError("Something went wrong while loading the course content.");
             }
         }
@@ -248,6 +253,11 @@
 
             const lessonListEl = document.getElementById('lesson-list');
             const enrollBtn = document.getElementById('enroll-btn');
+            const warningEl = document.getElementById('profile-warning');
+
+            // Reset UI states
+            warningEl.classList.add('hidden');
+            enrollBtn.disabled = false;
 
             if (status === 'approved' || status === 'active') {
                 enrollBtn.textContent = 'Start Learning';
@@ -273,8 +283,9 @@
                     </div>
                 `).join('');
             } else {
+                // If profile is incomplete AND user is not already enrolled/approved
                 if (isProfileIncomplete) {
-                    document.getElementById('profile-warning').classList.remove('hidden');
+                    warningEl.classList.remove('hidden');
                     enrollBtn.textContent = 'Profile Incomplete';
                     enrollBtn.disabled = true;
                     enrollBtn.className = 'w-full py-4 bg-slate-300 dark:bg-slate-800 text-slate-400 dark:text-slate-600 rounded-2xl font-bold cursor-not-allowed';
@@ -284,6 +295,8 @@
                         enrollBtn.className = 'w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-amber-500/30 active:scale-[0.98]';
                         enrollBtn.onclick = () => window.location.href = `checkout.html?course_id=${course.id}`;
                     } else {
+                        enrollBtn.textContent = 'Enroll Now';
+                        enrollBtn.className = 'w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-[0.98]';
                         enrollBtn.onclick = () => handleEnroll(course.id, userId);
                     }
                 }
@@ -300,6 +313,7 @@
 
         async function handleEnroll(courseId, userId) {
             const btn = document.getElementById('enroll-btn');
+            const originalText = btn.textContent;
             btn.textContent = 'Sending Request...';
             btn.disabled = true;
 
@@ -312,7 +326,7 @@
                 setTimeout(() => window.location.href = `checkout.html?course_id=${courseId}`, 1500);
             } catch (err) {
                 showMessage(err.message || "Enrollment failed.");
-                btn.textContent = 'Enroll Now';
+                btn.textContent = originalText;
                 btn.disabled = false;
             }
         }
