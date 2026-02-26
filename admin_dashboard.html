@@ -78,7 +78,7 @@
     </aside>
 
     <!-- Main -->
-    <main class="flex-grow p-4 md:p-8 lg:p-12">
+    <main class="flex-grow p-4 md:p-8 lg:p-12 overflow-x-hidden">
         <div class="max-w-6xl mx-auto">
             <div class="mb-10 flex flex-col md:flex-row justify-between gap-6">
                 <div>
@@ -124,7 +124,7 @@
     <!-- Modal for Course Editing -->
     <div id="course-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
         <div class="modal-overlay absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onclick="closeCourseModal()"></div>
-        <div class="modal-content relative bg-white dark:bg-slate-900 w-full max-w-4xl max-h-[90vh] rounded-[2rem] flex flex-col overflow-hidden opacity-0 scale-95 transition-all">
+        <div class="modal-content relative bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[95vh] rounded-[2rem] flex flex-col overflow-hidden opacity-0 scale-95 transition-all">
             <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                 <h3 id="modal-heading" class="text-xl font-black">Manage Course</h3>
                 <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600">
@@ -137,29 +137,29 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="text-[10px] font-black uppercase text-slate-400">Title</label>
-                            <input type="text" id="course-title" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950">
+                            <input type="text" id="course-title" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
                         </div>
                         <div>
                             <label class="text-[10px] font-black uppercase text-slate-400">Price (Rs.)</label>
-                            <input type="number" id="course-price" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950">
+                            <input type="number" id="course-price" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
                         </div>
                         <div class="md:col-span-2">
                             <label class="text-[10px] font-black uppercase text-slate-400">Thumbnail URL</label>
-                            <input type="url" id="course-thumbnail" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950">
+                            <input type="url" id="course-thumbnail" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
                         </div>
                     </div>
                     <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
                         <div class="flex justify-between items-center mb-4">
-                            <h4 class="text-sm font-black uppercase tracking-widest">Lessons</h4>
-                            <button type="button" onclick="addLessonRow()" class="px-3 py-1.5 bg-brand-600 text-white text-[10px] font-black rounded-lg">ADD LESSON</button>
+                            <h4 class="text-sm font-black uppercase tracking-widest">Lessons Content</h4>
+                            <button type="button" onclick="addLessonRow()" class="px-4 py-2 bg-brand-600 text-white text-[10px] font-black rounded-xl">ADD NEW LESSON</button>
                         </div>
-                        <div id="lessons-container" class="space-y-3"></div>
+                        <div id="lessons-container" class="space-y-4"></div>
                     </div>
                 </form>
             </div>
             <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
                 <button onclick="closeCourseModal()" class="px-6 py-2 text-sm font-bold text-slate-500">Cancel</button>
-                <button type="submit" form="course-form" id="save-course-btn" class="px-8 py-2 bg-brand-600 text-white text-sm font-black rounded-xl">Save</button>
+                <button type="submit" form="course-form" id="save-course-btn" class="px-8 py-2 bg-brand-600 text-white text-sm font-black rounded-xl shadow-lg">Save Course & Lessons</button>
             </div>
         </div>
     </div>
@@ -170,6 +170,7 @@
     <script>
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
         let currentView = 'approvals';
+        let currentAdminId = null;
 
         const tableBody = document.getElementById('table-body');
         const tableHead = document.getElementById('table-head');
@@ -181,8 +182,11 @@
             try {
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 if (!user) { window.location.href = 'login.html'; return; }
+                currentAdminId = user.id;
+                
                 const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
                 if (!profile || profile.role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+                
                 adminBody.classList.remove('opacity-0');
                 adminBody.classList.add('opacity-100');
                 initDashboard();
@@ -220,12 +224,12 @@
             }
         }
 
-        // --- ENROLLMENTS LOGIC ---
+        // --- ENROLLMENTS ---
         async function fetchEnrollments() {
             tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800"><th class="px-6 py-4">Student ID</th><th class="px-6 py-4">Course</th><th class="px-6 py-4">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
             tableBody.innerHTML = `<tr><td colspan="4" class="py-10 text-center animate-pulse">Loading...</td></tr>`;
             
-            const { data, error } = await supabaseClient.from('enrollments').select('*, courses(title)').order('created_at', { ascending: false });
+            const { data } = await supabaseClient.from('enrollments').select('*, courses(title)').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
 
@@ -241,10 +245,10 @@
                     <td class="px-6 py-4 text-right">
                         ${isPending ? `
                             <div class="flex justify-end gap-2">
-                                <button onclick="updateEnrollmentStatus('${row.id}', 'active')" class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>
-                                <button onclick="updateEnrollmentStatus('${row.id}', 'rejected')" class="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                                <button onclick="updateEnrollmentStatus('${row.id}', 'active')" class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg></button>
+                                <button onclick="updateEnrollmentStatus('${row.id}', 'rejected')" class="p-1.5 bg-red-50 text-red-600 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
                             </div>
-                        ` : '<span class="text-[10px] text-slate-300 font-bold italic uppercase">Done</span>'}
+                        ` : '<span class="text-[10px] text-slate-300 font-bold italic uppercase">Settled</span>'}
                     </td>
                 </tr>`;
             }).join('');
@@ -255,7 +259,7 @@
             if (!error) { showToast(`Enrollment ${status}`); fetchEnrollments(); fetchStats(); }
         }
 
-        // --- COURSE LOGIC ---
+        // --- COURSES & LESSONS ---
         async function fetchCourses() {
             tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800"><th class="px-6 py-4">Course</th><th class="px-6 py-4">Price</th><th class="px-6 py-4 text-right">Actions</th></tr>`;
             const { data } = await supabaseClient.from('courses').select('*').order('created_at', { ascending: false });
@@ -281,7 +285,7 @@
             document.getElementById('course-form').reset();
             container.innerHTML = '';
             document.getElementById('edit-course-id').value = courseId || '';
-            document.getElementById('modal-heading').innerText = courseId ? 'Edit Course' : 'Create Course';
+            document.getElementById('modal-heading').innerText = courseId ? 'Edit Course Catalog' : 'Create New Course';
 
             if (courseId) {
                 const { data: course } = await supabaseClient.from('courses').select('*').eq('id', courseId).single();
@@ -308,21 +312,45 @@
             const container = document.getElementById('lessons-container');
             const id = 'l-' + Math.random().toString(36).substr(2, 9);
             const div = document.createElement('div');
-            div.className = "flex gap-3 items-end p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800";
+            div.className = "p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 relative group";
             div.id = id;
+            
+            // Note: Instructor (UUID) defaults to current admin if empty
+            const instructorValue = lesson?.instructor || currentAdminId || '';
+
             div.innerHTML = `
                 <input type="hidden" class="lesson-id" value="${lesson?.id || ''}">
-                <div class="flex-grow space-y-1">
-                    <input type="text" class="lesson-title w-full px-3 py-2 text-xs rounded-lg border dark:bg-slate-900" placeholder="Title" value="${lesson?.title || ''}">
-                    <input type="text" class="lesson-video w-full px-3 py-2 text-xs rounded-lg border dark:bg-slate-900" placeholder="Video URL" value="${lesson?.video_url || ''}">
+                <button type="button" onclick="removeLessonRow('${id}', '${lesson?.id || ''}')" class="absolute top-4 right-4 text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Lesson Title</label>
+                        <input type="text" class="lesson-title w-full px-3 py-2 text-sm rounded-lg border dark:bg-slate-900 outline-none focus:border-brand-500" placeholder="e.g. Introduction to Physics" value="${lesson?.title || ''}">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Duration (e.g. 15 mins)</label>
+                        <input type="text" class="lesson-duration w-full px-3 py-2 text-sm rounded-lg border dark:bg-slate-900 outline-none focus:border-brand-500" placeholder="10:00" value="${lesson?.duration || ''}">
+                    </div>
+                    <div class="space-y-1 md:col-span-2">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Description</label>
+                        <textarea class="lesson-desc w-full px-3 py-2 text-sm rounded-lg border dark:bg-slate-900 outline-none focus:border-brand-500 min-h-[60px]" placeholder="Brief summary of the lesson...">${lesson?.description || ''}</textarea>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Video URL</label>
+                        <input type="text" class="lesson-video w-full px-3 py-2 text-sm rounded-lg border dark:bg-slate-900 outline-none focus:border-brand-500" placeholder="https://youtube.com/..." value="${lesson?.video_url || ''}">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] font-black uppercase text-slate-400">Instructor UUID</label>
+                        <input type="text" class="lesson-instructor w-full px-3 py-2 text-sm font-mono rounded-lg border dark:bg-slate-900 outline-none focus:border-brand-500" placeholder="UUID" value="${instructorValue}">
+                    </div>
                 </div>
-                <button type="button" onclick="removeLessonRow('${id}', '${lesson?.id || ''}')" class="p-2 text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
             `;
             container.appendChild(div);
         }
 
         async function removeLessonRow(rowId, lessonId) {
-            if (lessonId && confirm("Permanently delete lesson?")) {
+            if (lessonId && confirm("Permanently delete lesson from database?")) {
                 await supabaseClient.from('lessons').delete().eq('id', lessonId);
             }
             document.getElementById(rowId).remove();
@@ -332,52 +360,81 @@
             e.preventDefault();
             const courseId = document.getElementById('edit-course-id').value;
             const btn = document.getElementById('save-course-btn');
-            btn.disabled = true; btn.innerText = "Saving...";
+            btn.disabled = true; btn.innerText = "Processing...";
 
-            const payload = {
+            const coursePayload = {
                 title: document.getElementById('course-title').value,
                 price: parseFloat(document.getElementById('course-price').value),
                 thumbnail: document.getElementById('course-thumbnail').value
             };
 
             try {
-                let id = courseId;
-                if (courseId) { await supabaseClient.from('courses').update(payload).eq('id', courseId); }
-                else { const { data } = await supabaseClient.from('courses').insert([payload]).select().single(); id = data.id; }
+                let currentId = courseId;
+                if (courseId) { 
+                    await supabaseClient.from('courses').update(coursePayload).eq('id', courseId); 
+                } else { 
+                    const { data, error: insErr } = await supabaseClient.from('courses').insert([coursePayload]).select().single();
+                    if (insErr) throw insErr;
+                    currentId = data.id; 
+                }
 
                 const lessonRows = document.querySelectorAll('#lessons-container > div');
-                const lessons = Array.from(lessonRows).map((row, i) => ({
-                    id: row.querySelector('.lesson-id').value || undefined,
-                    course_id: id,
-                    title: row.querySelector('.lesson-title').value,
-                    video_url: row.querySelector('.lesson-video').value,
-                    order_index: i
-                })).filter(l => l.title.trim());
+                const lessons = Array.from(lessonRows).map((row, i) => {
+                    const lId = row.querySelector('.lesson-id').value;
+                    const inst = row.querySelector('.lesson-instructor').value || currentAdminId;
+                    
+                    return {
+                        ...(lId ? { id: lId } : {}),
+                        course_id: currentId,
+                        title: row.querySelector('.lesson-title').value,
+                        description: row.querySelector('.lesson-desc').value,
+                        duration: row.querySelector('.lesson-duration').value,
+                        video_url: row.querySelector('.lesson-video').value,
+                        instructor: inst,
+                        order_index: i
+                    };
+                }).filter(l => l.title.trim());
 
-                if (lessons.length) await supabaseClient.from('lessons').upsert(lessons);
+                if (lessons.length) {
+                    const { error: upsertErr } = await supabaseClient.from('lessons').upsert(lessons);
+                    if (upsertErr) throw upsertErr;
+                }
                 
-                showToast("Course saved!"); closeCourseModal(); fetchCourses(); fetchStats();
-            } catch (err) { showToast("Error: " + err.message); }
-            finally { btn.disabled = false; btn.innerText = "Save"; }
+                showToast("Course and lessons updated successfully!"); 
+                closeCourseModal(); 
+                fetchCourses(); 
+                fetchStats();
+            } catch (err) { 
+                showToast("Error: " + err.message); 
+                console.error(err);
+            } finally { 
+                btn.disabled = false; 
+                btn.innerText = "Save Course & Lessons"; 
+            }
         });
 
         async function deleteCourse(id) {
-            if (confirm("Delete this course?")) {
+            if (confirm("Delete this course and all associated lessons?")) {
                 await supabaseClient.from('courses').delete().eq('id', id);
                 fetchCourses(); fetchStats();
             }
         }
 
-        // --- STUDENTS LOGIC ---
+        // --- STUDENTS ---
         async function fetchStudents() {
             tableHead.innerHTML = `<tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800"><th class="px-6 py-4">Name</th><th class="px-6 py-4">Email</th><th class="px-6 py-4">Registered</th></tr>`;
             const { data } = await supabaseClient.from('students').select('*').order('created_at', { ascending: false });
             if (!data?.length) { tableBody.innerHTML = ''; emptyState.classList.remove('hidden'); return; }
             emptyState.classList.add('hidden');
-            tableBody.innerHTML = data.map(s => `<tr class="border-b dark:border-slate-800"><td class="px-6 py-4 text-sm font-bold">${s.full_name}</td><td class="px-6 py-4 text-sm">${s.email}</td><td class="px-6 py-4 text-xs text-slate-400">${new Date(s.created_at).toLocaleDateString()}</td></tr>`).join('');
+            tableBody.innerHTML = data.map(s => `
+                <tr class="border-b dark:border-slate-800">
+                    <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">${s.full_name}</td>
+                    <td class="px-6 py-4 text-sm text-slate-500">${s.email}</td>
+                    <td class="px-6 py-4 text-xs text-slate-400">${new Date(s.created_at).toLocaleDateString()}</td>
+                </tr>`).join('');
         }
 
-        // --- UTILS ---
+        // --- UI UTILS ---
         async function fetchStats() {
             const { count: s } = await supabaseClient.from('students').select('*', { count: 'exact', head: true });
             const { count: c } = await supabaseClient.from('courses').select('*', { count: 'exact', head: true });
