@@ -23,7 +23,7 @@
         #custom-player {
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Force clicks through to our shield */
+            pointer-events: none;
         }
 
         .protection-barrier {
@@ -132,7 +132,6 @@
         </div>
     </nav>
 
-    <!-- Course Not Selected / Access Denied State -->
     <div id="access-denied" class="hidden fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
         <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-3xl flex items-center justify-center mb-6">
             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -146,8 +145,6 @@
 
     <main id="player-content" class="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Content Column -->
             <div class="lg:col-span-2 space-y-6">
                 <div id="video-container" class="video-wrapper shadow-2xl border border-slate-200 dark:border-slate-800">
                     <div class="protection-barrier" id="click-shield"></div>
@@ -164,7 +161,6 @@
                         <div class="progress-bar-container" id="progress-container">
                             <div id="progress-fill" class="progress-bar-fill"></div>
                         </div>
-                        
                         <div class="flex items-center justify-between text-white">
                             <div class="flex items-center gap-4">
                                 <button id="play-pause-btn" class="hover:text-emerald-500 transition">
@@ -192,7 +188,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div id="player-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 italic bg-slate-100 dark:bg-slate-900 z-40">
                         Select a lesson to start learning...
                     </div>
@@ -220,7 +215,6 @@
                 </div>
             </div>
 
-            <!-- Playlist Column -->
             <div class="lg:col-span-1">
                 <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm sticky top-24">
                     <div class="p-6 border-b border-slate-100 dark:border-slate-800">
@@ -258,7 +252,7 @@
 
         function onYouTubeIframeAPIReady() {
             isApiReady = true;
-            if (currentLessonId && currentCourseId) {
+            if (currentCourseId) {
                 init();
             }
         }
@@ -271,7 +265,6 @@
             }
             currentUser = user;
 
-            // REMOVED: Enrollment Check. Now strictly checks for Course ID presence.
             if (!currentCourseId) {
                 document.getElementById('access-denied').classList.remove('hidden');
                 document.getElementById('player-content').classList.add('hidden');
@@ -281,8 +274,8 @@
             const watermarkText = document.querySelector('#player-watermark span');
             watermarkText.textContent = `${user.email.split('@')[0]}`;
 
-            loadCourseData();
-            loadLessons();
+            await loadCourseData();
+            await loadLessons(); // This now handles the primary data fetch and default lesson selection
             setupControls();
         }
 
@@ -351,18 +344,32 @@
         }
 
         async function loadCourseData() {
-            const { data: course } = await supabaseClient.from('courses').select('title').eq('id', currentCourseId).single();
+            const { data: course } = await supabaseClient
+                .from('courses')
+                .select('title')
+                .eq('id', currentCourseId)
+                .single();
             if (course) document.getElementById('course-title').textContent = course.title;
         }
 
+        /**
+         * Fetches all lessons for the current course and user progress
+         */
         async function loadLessons() {
-            const { data: lessons } = await supabaseClient
+            // 1. Fetch lessons strictly by courseID
+            const { data: lessons, error: lessonError } = await supabaseClient
                 .from('lessons')
                 .select('*')
                 .eq('course_id', currentCourseId)
-                .order('section', { ascending: true })
-                .order('created_at', { ascending: true });
+                .order('section', { ascending: true }) // Order by section
+                .order('created_at', { ascending: true }); // Then by date within section
 
+            if (lessonError) {
+                console.error("Error loading lessons:", lessonError);
+                return;
+            }
+
+            // 2. Fetch User Progress
             const { data: progress } = await supabaseClient
                 .from('user_progress')
                 .select('lesson_id, completed')
@@ -370,12 +377,20 @@
 
             const completedMap = new Set(progress?.filter(p => p.completed).map(p => p.lesson_id));
             
+            // 3. Update Progress UI
             const pct = (lessons && lessons.length > 0) ? Math.round((completedMap.size / lessons.length) * 100) : 0;
             document.getElementById('sidebar-progress-bar').style.width = `${pct}%`;
             document.getElementById('sidebar-pct').textContent = `${pct}%`;
 
+            // 4. Render Lesson List
             const listContainer = document.getElementById('lesson-list');
-            if (lessons) {
+            if (lessons && lessons.length > 0) {
+                // Determine which lesson should be active
+                if (!currentLessonId) {
+                    currentLessonId = lessons[0].id;
+                    sessionStorage.setItem('current_lesson_id', currentLessonId);
+                }
+
                 listContainer.innerHTML = lessons.map((lesson, index) => {
                     const isActive = lesson.id === currentLessonId;
                     const isCompleted = completedMap.has(lesson.id);
@@ -393,12 +408,13 @@
                     `;
                 }).join('');
 
-                if (currentLessonId) {
-                    const activeLesson = lessons.find(l => l.id === currentLessonId);
-                    if (activeLesson) renderPlayer(activeLesson, completedMap.has(currentLessonId));
-                } else if (lessons.length > 0) {
-                    changeLesson(lessons[0].id);
+                // 5. Render the actual player content for the active lesson
+                const activeLesson = lessons.find(l => l.id === currentLessonId);
+                if (activeLesson) {
+                    renderPlayer(activeLesson, completedMap.has(currentLessonId));
                 }
+            } else {
+                listContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm italic">No lessons available for this course.</div>`;
             }
         }
 
@@ -510,7 +526,7 @@
         async function changeLesson(id) {
             currentLessonId = id;
             sessionStorage.setItem('current_lesson_id', id);
-            loadLessons();
+            await loadLessons();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -530,7 +546,6 @@
             document.documentElement.classList.toggle('dark');
         };
 
-        // Start initialization
         init();
     </script>
 </body>
