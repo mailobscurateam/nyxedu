@@ -26,6 +26,11 @@
             document.documentElement.classList.remove('dark');
         }
     </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
 
@@ -59,7 +64,7 @@
             </ol>
         </nav>
 
-        <!-- Incomplete Profile Banner (Hidden by default) -->
+        <!-- Incomplete Profile Banner -->
         <div id="profile-warning" class="hidden mb-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-6 rounded-3xl flex items-center gap-4">
             <div class="bg-amber-100 dark:bg-amber-900/40 p-3 rounded-full text-amber-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -125,13 +130,10 @@
         </div>
     </main>
 
+    <script src="supabase.js"></script>
     <script>
-        const CONFIG = {
-            SUPABASE_URL: 'https://pkqpvnrtxtqlngwtfnhy.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcXB2bnJ0eHRxbG5nd3Rmbmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzQxNTUsImV4cCI6MjA4NTk1MDE1NX0.wrYYlIzt1slOXkbUAqAaSI1bA9xJ2N8QhNHSRJIkZR0'
-        };
-
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        let activeCourseData = null;
 
         function showMessage(msg, type = 'error') {
             const container = document.getElementById('toast-container');
@@ -169,14 +171,13 @@
                     return;
                 }
 
-                // CHECK STUDENT DATA VALIDATION FOR THE CURRENT USER
-                const { data: student, error: studentError } = await supabaseClient
+                // Check Profile Completion
+                const { data: student } = await supabaseClient
                     .from('students')
                     .select('*')
                     .eq('id', user.id)
                     .maybeSingle();
 
-                // Validation logic: If no student record exists or ANY field in that specific row is null/empty
                 const isProfileIncomplete = !student || 
                     Object.values(student).some(val => val === null || val === '');
 
@@ -190,6 +191,7 @@
 
                 const enrollmentStatus = enrollment ? enrollment.status : null;
 
+                // Fetch Course Details
                 const { data: course, error: courseError } = await supabaseClient
                     .from('courses')
                     .select('*')
@@ -197,12 +199,14 @@
                     .single();
 
                 if (courseError || !course) throw new Error('Course not found');
+                activeCourseData = course; // Store locally for navigation use
 
+                // Fetch Lessons
                 const { data: lessons } = await supabaseClient
                     .from('lessons')
                     .select('*')
                     .eq('course_id', courseId)
-                    .order('created_at', { ascending: true });
+                    .order('order_index', { ascending: true });
 
                 renderPage(course, lessons || [], enrollmentStatus, user.id, isProfileIncomplete);
 
@@ -234,8 +238,7 @@
                 enrollBtn.className = 'w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-600/30 active:scale-[0.98]';
                 enrollBtn.onclick = () => {
                     if (lessons.length > 0) {
-                        sessionStorage.setItem('current_lesson_id', lessons[0].id);
-                        window.location.href = 'player.html';
+                        navigateToLesson(lessons[0].id);
                     } else {
                         showMessage("No lessons available yet.");
                     }
@@ -254,7 +257,6 @@
                     </div>
                 `).join('');
             } else {
-                // Not Enrolled OR Pending
                 if (isProfileIncomplete) {
                     document.getElementById('profile-warning').classList.remove('hidden');
                     enrollBtn.textContent = 'Profile Incomplete';
@@ -300,6 +302,14 @@
         }
 
         function navigateToLesson(lessonId) {
+            // PERSIST COURSE DATA FOR THE PLAYER
+            if (activeCourseData) {
+                localStorage.setItem('active_course', JSON.stringify({
+                    id: activeCourseData.id,
+                    title: activeCourseData.title,
+                    thumbnail: activeCourseData.thumbnail
+                }));
+            }
             sessionStorage.setItem('current_lesson_id', lessonId);
             window.location.href = 'player.html';
         }
