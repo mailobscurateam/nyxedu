@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | EduStream</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 
+                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 
+                            800: '#075985', 900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        };
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .active-nav { @apply bg-brand-50 dark:bg-brand-900/20 text-brand-600 font-bold; }
+        .modal-overlay { transition: opacity 0.2s ease-out; }
+        .modal-content { transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+    </style>
+</head>
+<body id="admin-body" class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300 flex opacity-0">
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar-transition w-64 h-screen sticky top-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 overflow-hidden">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-brand-600 rounded-lg flex-shrink-0 flex items-center justify-center text-white font-black">E</div>
+                <span id="logo-text" class="text-xl font-bold text-slate-900 dark:text-white font-mono tracking-tighter whitespace-nowrap">EduStream</span>
+            </div>
+            <button id="toggle-sidebar" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                <svg id="toggle-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+            </button>
+        </div>
+
+        <nav class="flex-grow py-6 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+            <button onclick="switchView('approvals')" id="nav-approvals" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group active-nav">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="nav-label">Enrollments</span>
+            </button>
+            <button onclick="switchView('courses')" id="nav-courses" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 rounded-xl transition-all group">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span class="nav-label">Courses</span>
+            </button>
+            <button onclick="switchView('users')" id="nav-users" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 rounded-xl transition-all group">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span class="nav-label">Students</span>
+            </button>
+        </nav>
+
+        <div class="p-3 border-t border-slate-100 dark:border-slate-800 space-y-1">
+            <button id="theme-toggle" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 rounded-xl">
+                <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                <svg id="moon-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                <span class="nav-label">Appearance</span>
+            </button>
+            <button id="logout-btn" class="w-full flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:text-red-600 rounded-xl">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span class="nav-label">Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-grow p-4 md:p-8 lg:p-12 overflow-x-hidden">
+        <div class="max-w-6xl mx-auto">
+            <div class="mb-10 flex flex-col md:flex-row justify-between gap-6">
+                <div>
+                    <h1 id="view-title" class="text-3xl font-black text-slate-900 dark:text-white">Admin Dashboard</h1>
+                    <p id="view-desc" class="text-slate-500">Manage your EduStream platform.</p>
+                </div>
+                <div id="view-actions"></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase">Total Students</p>
+                    <p id="stat-students" class="text-3xl font-black">--</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase">Total Courses</p>
+                    <p id="stat-courses" class="text-3xl font-black">--</p>
+                </div>
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <p class="text-slate-500 text-[10px] font-bold uppercase">Active Enrollments</p>
+                    <p id="stat-active" class="text-3xl font-black text-emerald-600">--</p>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <h2 id="table-title" class="font-bold">Database View</h2>
+                    <button id="refresh-btn" class="text-xs font-black text-brand-600 uppercase">Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="hidden py-20 text-center text-slate-400">No records found.</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Course Editing -->
+    <div id="course-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onclick="closeCourseModal()"></div>
+        <div class="modal-content relative bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[95vh] rounded-[2rem] flex flex-col overflow-hidden opacity-0 scale-95 transition-all">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 id="modal-heading" class="text-xl font-black">Manage Course</h3>
+                <button onclick="closeCourseModal()" class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="flex-grow overflow-y-auto p-6 custom-scrollbar">
+                <form id="course-form" class="space-y-6">
+                    <input type="hidden" id="edit-course-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-400">Title</label>
+                            <input type="text" id="course-title" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-slate-400">Price (Rs.)</label>
+                            <input type="number" id="course-price" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-[10px] font-black uppercase text-slate-400">Thumbnail URL</label>
+                            <input type="url" id="course-thumbnail" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-950 focus:ring-2 ring-brand-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-black uppercase tracking-widest">Lessons Content</h4>
+                            <button type="button" onclick="addLessonRow()" class="px-4 py-2 bg-brand-600 text-white text-[10px] font-black rounded-xl">ADD NEW LESSON</button>
+                        </div>
+                        <div id="lessons-container" class="space-y-4"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="p-6 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3">
+                <button onclick="closeCourseModal()" class="px-6 py-2 text-sm font-bold text-slate-500">Cancel</button>
+                <button type="submit" form="course-form" id="save-course-btn" class="px-8 py-2 bg-brand-600 text-white text-sm font-black rounded-xl shadow-lg">Save Course & Lessons</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-2xl shadow-2xl opacity-0 transition-all z-[101]"></div>
+
+    <!-- Note: Make sure config and logic is linked to your actual supabase setup -->
+    <script>
+        // Placeholder for supabase.js logic
+        // const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        
+        // Mock currentAdminId for logic consistency
+        let currentAdminId = null;
+        let currentView = 'approvals';
+
+        const tableBody = document.getElementById('table-body');
+        const tableHead = document.getElementById('table-head');
+        const emptyState = document.getElementById('empty-state');
+        const adminBody = document.getElementById('admin-body');
+        const viewActions = document.getElementById('view-actions');
+
+        async function checkAdminAccess() {
+            // Logic to verify admin role
+            // ...
+            adminBody.classList.remove('opacity-0');
+            adminBody.classList.add('opacity-100');
+            initDashboard();
+        }
+
+        function initDashboard() {
+            updateIcons();
+            fetchStats();
+            switchView('approvals');
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active-nav'));
+            document.getElementById(`nav-${view}`)?.classList.add('active-nav');
+            
+            const title = document.getElementById('view-title');
+            const desc = document.getElementById('view-desc');
+            viewActions.innerHTML = '';
+
+            if (view === 'approvals') {
+                title.innerText = "Enrollments";
+                desc.innerText = "Approve or reject course enrollment requests.";
+                fetchEnrollments();
+            } else if (view === 'courses') {
+                title.innerText = "Course Management";
+                desc.innerText = "Add, edit or remove courses and lessons.";
+                viewActions.innerHTML = `<button onclick="openCourseModal()" class="px-5 py-2.5 bg-brand-600 text-white text-xs font-black rounded-xl shadow-lg">NEW COURSE</button>`;
+                fetchCourses();
+            } else if (view === 'users') {
+                title.innerText = "Students";
+                desc.innerText = "Detailed directory of all registered students including locations.";
+                fetchStudents();
+            }
+        }
+
+        // --- ENROLLMENTS ---
+        async function fetchEnrollments() {
+            tableHead.innerHTML = `
+                <tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800">
+                    <th class="px-6 py-4">Student ID</th>
+                    <th class="px-6 py-4">Course</th>
+                    <th class="px-6 py-4">Status</th>
+                    <th class="px-6 py-4 text-right">Action</th>
+                </tr>`;
+            // ... (Rest of fetchEnrollments logic)
+        }
+
+        // --- COURSES ---
+        async function fetchCourses() {
+            tableHead.innerHTML = `
+                <tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800">
+                    <th class="px-6 py-4">Course</th>
+                    <th class="px-6 py-4">Price</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                </tr>`;
+            // ... (Rest of fetchCourses logic)
+        }
+
+        // --- STUDENTS (UPDATED WITH ADDRESS & DISTRICT) ---
+        async function fetchStudents() {
+            tableHead.innerHTML = `
+                <tr class="text-[10px] uppercase text-slate-400 border-b dark:border-slate-800">
+                    <th class="px-6 py-4">Name</th>
+                    <th class="px-6 py-4">Email</th>
+                    <th class="px-6 py-4">District</th>
+                    <th class="px-6 py-4">Address</th>
+                    <th class="px-6 py-4">Registered</th>
+                </tr>`;
+            
+            tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center animate-pulse">Loading Students...</td></tr>`;
+
+            try {
+                const { data, error } = await supabaseClient.from('students').select('*').order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                if (!data?.length) { 
+                    tableBody.innerHTML = ''; 
+                    emptyState.classList.remove('hidden'); 
+                    return; 
+                }
+
+                emptyState.classList.add('hidden');
+                tableBody.innerHTML = data.map(s => `
+                    <tr class="border-b dark:border-slate-800 hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
+                            <div class="flex flex-col">
+                                <span>${s.full_name}</span>
+                                <span class="text-[10px] font-mono text-slate-400 lg:hidden">${s.email}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500 hidden lg:table-cell">${s.email}</td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-600 dark:text-slate-300 text-xs font-semibold">
+                                ${s.district || 'N/A'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-500 max-w-[200px] truncate" title="${s.address || 'N/A'}">
+                            ${s.address || '<span class="italic text-slate-300 text-xs">No address</span>'}
+                        </td>
+                        <td class="px-6 py-4 text-xs text-slate-400">
+                            ${new Date(s.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </td>
+                    </tr>`).join('');
+            } catch (err) {
+                console.error("Fetch Students Error:", err);
+                tableBody.innerHTML = `<tr><td colspan="5" class="py-10 text-center text-red-500">Failed to load student data.</td></tr>`;
+            }
+        }
+
+        // --- STATS & UTILS ---
+        async function fetchStats() {
+            // ... (Same as original)
+        }
+
+        function updateIcons() {
+            const d = document.documentElement.classList.contains('dark');
+            document.getElementById('sun-icon').classList.toggle('hidden', !d);
+            document.getElementById('moon-icon').classList.toggle('hidden', d);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); t.innerText = msg; t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 3000);
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); updateIcons(); });
+        document.getElementById('refresh-btn').addEventListener('click', () => switchView(currentView));
+        
+        checkAdminAccess();
+    </script>
+</body>
+</html>
