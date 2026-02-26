@@ -3,551 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Player | EduStream</title>
+    <title>Learning Player | EduStream</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
-        
-        .video-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16/9;
-            border-radius: 1.5rem;
-            overflow: hidden;
-            background: #000;
-        }
-
-        #custom-player {
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .protection-barrier {
-            position: absolute;
-            inset: 0;
-            z-index: 15;
-            background: transparent;
-            cursor: pointer;
-        }
-
-        .watermark {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            pointer-events: none;
-            user-select: none;
-            opacity: 0.6;
-            z-index: 25;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0.4rem 0.8rem;
-            border-radius: 0.5rem;
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .player-controls-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.9));
-            padding: 2.5rem 1.5rem 1.25rem;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 30;
-        }
-
-        .video-wrapper:hover .player-controls-overlay {
-            opacity: 1;
-        }
-
-        .progress-bar-container {
-            height: 6px;
-            background: rgba(255,255,255,0.2);
-            cursor: pointer;
-            border-radius: 3px;
-            margin-bottom: 1rem;
-            position: relative;
-            transition: height 0.2s;
-        }
-        
-        .progress-bar-container:hover {
-            height: 8px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: #10b981;
-            width: 0%;
-            border-radius: 3px;
-            position: relative;
-        }
-        
-        .progress-bar-fill::after {
-            content: '';
-            position: absolute;
-            right: -4px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 12px;
-            height: 12px;
-            background: #fff;
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        
-        .progress-bar-container:hover .progress-bar-fill::after {
-            opacity: 1;
-        }
-    </style>
-</head>
-<body class="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors duration-300">
-
-    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-4 flex-1 overflow-hidden">
-                <a href="dashboard.html" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                </a>
-                <div class="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 shrink-0"></div>
-                <div class="flex flex-col min-w-0">
-                    <span id="nav-course-title" class="text-sm font-black truncate text-emerald-600 uppercase tracking-tighter">Loading Course...</span>
-                    <span id="nav-lesson-title" class="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">Select Lesson</span>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4 shrink-0 ml-4">
-                <button id="theme-toggle" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                </button>
-                <button id="logout-btn" class="text-sm font-bold text-slate-500 hover:text-red-500 transition">Logout</button>
-            </div>
-        </div>
-    </nav>
-
-    <div id="access-denied" class="hidden fixed inset-0 z-[60] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-3xl flex items-center justify-center mb-6">
-            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        </div>
-        <h2 class="text-3xl font-black mb-2">No Course Selected</h2>
-        <p class="text-slate-500 dark:text-slate-400 max-w-md mb-8">Please select a course from your dashboard to begin viewing lessons.</p>
-        <div class="flex gap-4">
-            <a href="dashboard.html" class="px-8 py-3 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-2xl font-bold hover:scale-105 transition">Go to Dashboard</a>
-        </div>
-    </div>
-
-    <main id="player-content" class="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-                <div id="video-container" class="video-wrapper shadow-2xl border border-slate-200 dark:border-slate-800">
-                    <div class="protection-barrier" id="click-shield"></div>
-                    <div class="watermark" id="player-watermark">
-                        <div class="w-4 h-4 bg-emerald-600 rounded flex items-center justify-center">
-                            <span class="text-white text-[8px] font-black">E</span>
-                        </div>
-                        <span class="text-white text-[10px] font-bold tracking-widest uppercase">Member Content</span>
-                    </div>
-                    
-                    <div id="custom-player"></div>
-
-                    <div id="controls-ui" class="player-controls-overlay">
-                        <div class="progress-bar-container" id="progress-container">
-                            <div id="progress-fill" class="progress-bar-fill"></div>
-                        </div>
-                        <div class="flex items-center justify-between text-white">
-                            <div class="flex items-center gap-4">
-                                <button id="play-pause-btn" class="hover:text-emerald-500 transition">
-                                    <svg id="play-icon" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                    <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                </button>
-                                <div class="flex items-center gap-2 group/vol">
-                                    <button id="mute-btn" class="hover:text-emerald-500 transition">
-                                        <svg id="vol-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-                                    </button>
-                                    <input type="range" id="volume-slider" min="0" max="100" value="100" class="w-0 group-hover/vol:w-20 transition-all accent-emerald-500 h-1">
-                                </div>
-                                <span id="time-display" class="text-xs font-mono opacity-80">0:00 / 0:00</span>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <select id="speed-switcher" class="bg-transparent text-xs font-bold border-none focus:ring-0 cursor-pointer hover:text-emerald-500">
-                                    <option value="0.5" class="bg-slate-900">0.5x</option>
-                                    <option value="1" class="bg-slate-900" selected>1.0x</option>
-                                    <option value="1.5" class="bg-slate-900">1.5x</option>
-                                    <option value="2" class="bg-slate-900">2.0x</option>
-                                </select>
-                                <button id="fullscreen-btn" class="hover:text-emerald-500 transition">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="player-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 italic bg-slate-100 dark:bg-slate-900 z-40">
-                        Select a lesson to start learning...
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-900 rounded-[2rem] p-8 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded text-[10px] font-black uppercase tracking-widest">Active Lesson</span>
-                                <div class="h-1 w-1 bg-slate-300 rounded-full"></div>
-                                <span id="course-label" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Course Player</span>
-                            </div>
-                            <h2 id="lesson-title" class="text-3xl font-black mb-4">Lesson Title</h2>
-                            <div id="resource-box" class="hidden flex items-center gap-3 mb-6">
-                                <a id="resource-link" href="#" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-emerald-50 transition border border-transparent hover:border-emerald-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                    Download Lesson Resources
-                                </a>
-                            </div>
-                        </div>
-                        <button id="mark-complete" class="shrink-0 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:scale-105 transition active:scale-95 disabled:opacity-50">
-                            Mark as Complete
-                        </button>
-                    </div>
-                    <div class="h-[1px] w-full bg-slate-100 dark:bg-slate-800 mb-6"></div>
-                    <div id="lesson-description" class="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">
-                        Loading lesson details...
-                    </div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-1">
-                <div class="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm sticky top-24">
-                    <div class="p-6 border-b border-slate-100 dark:border-slate-800">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="font-black text-lg">Course Content</h3>
-                            <span id="sidebar-pct" class="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded">0%</span>
-                        </div>
-                        <div class="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div id="sidebar-progress-bar" class="h-full bg-emerald-600 transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                    </div>
-                    <div id="lesson-list" class="max-h-[60vh] overflow-y-auto custom-scrollbar p-2 space-y-1">
-                        <!-- Lessons injected here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="https://www.youtube.com/iframe_api"></script>
-
     <script>
-        const CONFIG = {
-            SUPABASE_URL: 'https://pkqpvnrtxtqlngwtfnhy.supabase.co',
-            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcXB2bnJ0eHRxbG5nd3Rmbmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzNzQxNTUsImV4cCI6MjA4NTk1MDE1NX0.wrYYlIzt1slOXkbUAqAaSI1bA9xJ2N8QhNHSRJIkZR0'
-        };
-
-        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
-        let currentUser = null;
-        let currentCourseId = sessionStorage.getItem('current_course_id');
-        let currentLessonId = sessionStorage.getItem('current_lesson_id');
-        let player = null;
-        let progressTimer = null;
-        let isApiReady = false;
-
-        function onYouTubeIframeAPIReady() {
-            isApiReady = true;
-            if (currentCourseId) {
-                init();
-            }
-        }
-
-        async function init() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
-            if (!user) {
-                window.location.href = 'index.html';
-                return;
-            }
-            currentUser = user;
-
-            if (!currentCourseId) {
-                document.getElementById('access-denied').classList.remove('hidden');
-                document.getElementById('player-content').classList.add('hidden');
-                return;
-            }
-
-            const watermarkText = document.querySelector('#player-watermark span');
-            watermarkText.textContent = `${user.email.split('@')[0]}`;
-
-            await loadCourseData();
-            await loadLessons(); 
-            setupControls();
-        }
-
-        function setupControls() {
-            const playBtn = document.getElementById('play-pause-btn');
-            const volSlider = document.getElementById('volume-slider');
-            const speedSwitcher = document.getElementById('speed-switcher');
-            const fullscreenBtn = document.getElementById('fullscreen-btn');
-            const container = document.getElementById('video-container');
-            const clickShield = document.getElementById('click-shield');
-
-            playBtn.onclick = (e) => { e.stopPropagation(); togglePlay(); };
-            clickShield.onclick = () => togglePlay();
-            
-            volSlider.oninput = (e) => {
-                if(player && player.setVolume) player.setVolume(e.target.value);
-            };
-
-            speedSwitcher.onchange = (e) => {
-                if(player && player.setPlaybackRate) player.setPlaybackRate(parseFloat(e.target.value));
-            };
-
-            fullscreenBtn.onclick = () => {
-                if (!document.fullscreenElement) {
-                    container.requestFullscreen();
-                } else {
-                    document.exitFullscreen();
-                }
-            };
-
-            document.getElementById('progress-container').onclick = (e) => {
-                if(!player || !player.getDuration) return;
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const percentage = x / rect.width;
-                player.seekTo(player.getDuration() * percentage);
-            };
-        }
-
-        function togglePlay() {
-            if (!player || typeof player.getPlayerState !== 'function') return;
-            const state = player.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-                player.pauseVideo();
-            } else {
-                player.playVideo();
-            }
-        }
-
-        function updateProgress() {
-            if (player && player.getCurrentTime && player.getDuration) {
-                const curr = player.getCurrentTime();
-                const total = player.getDuration();
-                const pct = total > 0 ? (curr / total) * 100 : 0;
-                
-                document.getElementById('progress-fill').style.width = `${pct}%`;
-                document.getElementById('time-display').textContent = `${formatTime(curr)} / ${formatTime(total)}`;
-            }
-        }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds < 0) return "0:00";
-            const min = Math.floor(seconds / 60);
-            const sec = Math.floor(seconds % 60);
-            return `${min}:${sec.toString().padStart(2, '0')}`;
-        }
-
-        async function loadCourseData() {
-            const { data: course } = await supabaseClient
-                .from('courses')
-                .select('title')
-                .eq('id', currentCourseId)
-                .single();
-            if (course) {
-                document.getElementById('nav-course-title').textContent = course.title;
-                document.getElementById('course-label').textContent = course.title;
-            }
-        }
-
-        async function loadLessons() {
-            const { data: lessons, error: lessonError } = await supabaseClient
-                .from('lessons')
-                .select('*')
-                .eq('course_id', currentCourseId)
-                .order('section', { ascending: true }) 
-                .order('created_at', { ascending: true });
-
-            if (lessonError) {
-                console.error("Error loading lessons:", lessonError);
-                return;
-            }
-
-            const { data: progress } = await supabaseClient
-                .from('user_progress')
-                .select('lesson_id, completed')
-                .eq('user_id', currentUser.id);
-
-            const completedMap = new Set(progress?.filter(p => p.completed).map(p => p.lesson_id));
-            
-            const pct = (lessons && lessons.length > 0) ? Math.round((completedMap.size / lessons.length) * 100) : 0;
-            document.getElementById('sidebar-progress-bar').style.width = `${pct}%`;
-            document.getElementById('sidebar-pct').textContent = `${pct}%`;
-
-            const listContainer = document.getElementById('lesson-list');
-            if (lessons && lessons.length > 0) {
-                if (!currentLessonId) {
-                    currentLessonId = lessons[0].id;
-                    sessionStorage.setItem('current_lesson_id', currentLessonId);
-                }
-
-                listContainer.innerHTML = lessons.map((lesson, index) => {
-                    const isActive = lesson.id === currentLessonId;
-                    const isCompleted = completedMap.has(lesson.id);
-                    
-                    return `
-                        <button onclick="changeLesson('${lesson.id}')" class="w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-100 dark:border-emerald-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}">
-                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}">
-                                ${isCompleted ? '✓' : index + 1}
-                            </div>
-                            <div class="text-left flex-1 min-w-0">
-                                <p class="text-sm font-bold truncate ${isActive ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-300'}">${lesson.title}</p>
-                                <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400">${lesson.duration || (lesson.lesson_type === 'video' ? 'Video' : 'Resource')}</p>
-                            </div>
-                        </button>
-                    `;
-                }).join('');
-
-                const activeLesson = lessons.find(l => l.id === currentLessonId);
-                if (activeLesson) {
-                    document.getElementById('nav-lesson-title').textContent = activeLesson.title;
-                    renderPlayer(activeLesson, completedMap.has(currentLessonId));
-                }
-            } else {
-                listContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm italic">No lessons available for this course.</div>`;
-            }
-        }
-
-        function renderPlayer(lesson, isCompleted) {
-            document.getElementById('lesson-title').textContent = lesson.title;
-            document.getElementById('lesson-description').textContent = lesson.description || 'No description provided.';
-            document.getElementById('player-placeholder').classList.add('hidden');
-            
-            const resBox = document.getElementById('resource-box');
-            const resLink = document.getElementById('resource-link');
-            if (lesson.resources) {
-                resBox.classList.remove('hidden');
-                resLink.href = lesson.resources;
-            } else {
-                resBox.classList.add('hidden');
-            }
-
-            const markBtn = document.getElementById('mark-complete');
-            markBtn.textContent = isCompleted ? 'Completed' : 'Mark as Complete';
-            markBtn.disabled = isCompleted;
-            markBtn.onclick = () => markAsComplete(lesson.id);
-
-            const watermark = document.getElementById('player-watermark');
-            const controlsUi = document.getElementById('controls-ui');
-            const clickShield = document.getElementById('click-shield');
-
-            if (lesson.lesson_type === 'video') {
-                const videoId = extractYoutubeId(lesson.video_url);
-                watermark.classList.remove('hidden');
-                controlsUi.classList.remove('hidden');
-                clickShield.classList.remove('hidden');
-                
-                if (videoId && isApiReady) {
-                    if (player && typeof player.loadVideoById === 'function') {
-                        player.loadVideoById(videoId);
-                    } else {
-                        player = new YT.Player('custom-player', {
-                            height: '100%',
-                            width: '100%',
-                            videoId: videoId,
-                            playerVars: {
-                                'autoplay': 1,
-                                'modestbranding': 1,
-                                'rel': 0,
-                                'controls': 0,
-                                'disablekb': 1,
-                                'fs': 0,
-                                'origin': window.location.origin
-                            },
-                            events: {
-                                'onReady': () => {
-                                    if (progressTimer) clearInterval(progressTimer);
-                                    progressTimer = setInterval(updateProgress, 500);
-                                },
-                                'onStateChange': (event) => {
-                                    const playIcon = document.getElementById('play-icon');
-                                    const pauseIcon = document.getElementById('pause-icon');
-                                    if (event.data === YT.PlayerState.PLAYING) {
-                                        playIcon.classList.add('hidden');
-                                        pauseIcon.classList.remove('hidden');
-                                    } else {
-                                        playIcon.classList.remove('hidden');
-                                        pauseIcon.classList.add('hidden');
-                                    }
-                                    if (event.data === YT.PlayerState.ENDED) {
-                                        markAsComplete(lesson.id);
-                                    }
-                                }
-                            }
-                        });
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399',
+                            500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b',
+                        }
                     }
                 }
-            } else {
-                watermark.classList.add('hidden');
-                controlsUi.classList.add('hidden');
-                clickShield.classList.add('hidden');
-                if (player && typeof player.destroy === 'function') {
-                    player.destroy();
-                    player = null;
+            }
+        };
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 1rem; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
+
+    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-16 sticky top-0 z-50">
+        <div class="max-w-full px-4 h-full flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button onclick="history.back()" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div>
+                    <h1 id="header-course-title" class="text-sm font-bold text-slate-900 dark:text-white truncate max-w-[200px] md:max-w-md">Loading...</h1>
+                    <p id="header-lesson-title" class="text-xs text-emerald-600 font-medium">Lesson Title</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    <svg id="sun-icon" class="w-5 h-5 dark:block hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 9h-1m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                    <svg id="moon-icon" class="w-5 h-5 dark:hidden block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        <!-- Main Content Area -->
+        <div class="flex-grow overflow-y-auto custom-scrollbar p-4 md:p-8">
+            <div id="player-view" class="max-w-5xl mx-auto space-y-6">
+                <!-- Video/Content Player -->
+                <div id="media-container" class="bg-black rounded-2xl overflow-hidden shadow-2xl aspect-video flex items-center justify-center">
+                    <div class="animate-pulse text-slate-500">Initializing Player...</div>
+                </div>
+
+                <!-- Lesson Info -->
+                <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 id="active-lesson-title" class="text-2xl font-bold text-slate-900 dark:text-white">Lesson Loading...</h2>
+                        <button id="mark-complete" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-600 dark:text-slate-400 rounded-xl text-sm font-bold transition-all">
+                            Mark Complete
+                        </button>
+                    </div>
+                    <p id="lesson-description" class="text-slate-600 dark:text-slate-400 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Curriculum -->
+        <aside class="w-full lg:w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col">
+            <div class="p-6 border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-slate-900 dark:text-white">Course Curriculum</h3>
+                <div class="mt-2 h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-500"></div>
+                </div>
+                <p id="progress-text" class="text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-wider">0% COMPLETE</p>
+            </div>
+            
+            <div id="playlist" class="flex-grow overflow-y-auto p-4 space-y-2 custom-scrollbar">
+                <!-- Lessons populated here -->
+            </div>
+        </aside>
+    </main>
+
+    <script src="supabase.js"></script>
+    <script>
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+        
+        // Data Retrieval Logic matches course_details.html
+        const activeCourse = JSON.parse(localStorage.getItem('active_course') || '{}');
+        let currentLessonId = sessionStorage.getItem('current_lesson_id');
+        let lessonsData = [];
+
+        async function initPlayer() {
+            if (!activeCourse.id) {
+                window.location.href = 'course.html';
+                return;
+            }
+
+            document.getElementById('header-course-title').textContent = activeCourse.title;
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                if (!user) throw new Error("Not authenticated");
+
+                // 1. Fetch all lessons for this course
+                const { data: lessons, error } = await supabaseClient
+                    .from('lessons')
+                    .select('*')
+                    .eq('course_id', activeCourse.id)
+                    .order('order_index', { ascending: true });
+
+                if (error) throw error;
+                lessonsData = lessons;
+
+                // 2. Determine which lesson to show
+                if (!currentLessonId && lessons.length > 0) {
+                    currentLessonId = lessons[0].id;
                 }
-                document.getElementById('custom-player').innerHTML = `
-                    <div class="w-full h-full flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-900 text-center p-8">
-                        <div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                        </div>
-                        <h3 class="text-xl font-black mb-2">Resource Link</h3>
-                        <a href="${lesson.video_url}" target="_blank" class="px-6 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-black transition">Open Lesson Resource</a>
-                    </div>`;
+
+                renderPlaylist();
+                loadLesson(currentLessonId);
+                updateProgress(user.id);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('media-container').innerHTML = `<p class="text-white p-4">Error loading course curriculum.</p>`;
             }
         }
 
-        async function markAsComplete(lessonId) {
-            const btn = document.getElementById('mark-complete');
-            if (btn.disabled) return;
-            
-            btn.textContent = 'Saving...';
-            btn.disabled = true;
-            
-            await supabaseClient.from('user_progress').upsert({
-                user_id: currentUser.id,
-                lesson_id: lessonId,
-                completed: true,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,lesson_id' });
-            
-            await loadLessons();
+        function renderPlaylist() {
+            const playlistEl = document.getElementById('playlist');
+            playlistEl.innerHTML = lessonsData.map((lesson, idx) => {
+                const isActive = lesson.id === currentLessonId;
+                return `
+                <div onclick="loadLesson('${lesson.id}')" 
+                     class="group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full ${isActive ? 'bg-emerald-500 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} flex items-center justify-center text-xs font-bold">
+                        ${idx + 1}
+                    </div>
+                    <div class="flex-grow min-w-0">
+                        <h4 class="text-xs font-bold ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'} truncate">${lesson.title}</h4>
+                        <p class="text-[10px] text-slate-500">${lesson.duration || '5:00'}</p>
+                    </div>
+                    ${isActive ? '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>' : ''}
+                </div>`;
+            }).join('');
         }
 
-        async function changeLesson(id) {
-            currentLessonId = id;
-            sessionStorage.setItem('current_lesson_id', id);
-            await loadLessons();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function loadLesson(lessonId) {
+            const lesson = lessonsData.find(l => l.id === lessonId);
+            if (!lesson) return;
+
+            currentLessonId = lessonId;
+            sessionStorage.setItem('current_lesson_id', lessonId);
+            
+            // Update UI
+            document.getElementById('header-lesson-title').textContent = `Now Playing: ${lesson.title}`;
+            document.getElementById('active-lesson-title').textContent = lesson.title;
+            document.getElementById('lesson-description').textContent = lesson.description || 'No description provided for this lesson.';
+            
+            const mediaContainer = document.getElementById('media-container');
+            
+            if (lesson.lesson_type === 'video') {
+                // Assuming video_url is a YouTube or Vimeo link. This handles YouTube embeds.
+                const videoId = extractYouTubeId(lesson.video_url);
+                if (videoId) {
+                    mediaContainer.innerHTML = `
+                        <div class="video-container w-full h-full">
+                            <iframe src="https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>`;
+                } else {
+                    mediaContainer.innerHTML = `<video controls class="w-full h-full bg-black"><source src="${lesson.video_url}" type="video/mp4"></video>`;
+                }
+            } else {
+                mediaContainer.innerHTML = `
+                    <div class="bg-white dark:bg-slate-800 w-full h-full flex flex-col items-center justify-center p-8 text-center">
+                        <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-3xl flex items-center justify-center text-emerald-600 mb-4">
+                             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Reading Material</h3>
+                        <p class="text-slate-500 mb-6">This lesson contains document-based content.</p>
+                        <a href="${lesson.video_url}" target="_blank" class="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20">Open Document</a>
+                    </div>`;
+            }
+
+            renderPlaylist();
         }
 
-        function extractYoutubeId(url) {
+        async function updateProgress(userId) {
+            // Placeholder logic: In a real app, you would fetch from a 'completed_lessons' table
+            // For now, let's say 10% progress
+            const progress = 15; 
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('progress-text').textContent = `${progress}% COMPLETE`;
+        }
+
+        function extractYouTubeId(url) {
             if (!url) return null;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
-        document.getElementById('logout-btn').onclick = async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = 'index.html';
-        };
-
-        document.getElementById('theme-toggle').onclick = () => {
+        document.getElementById('theme-toggle').addEventListener('click', () => {
             document.documentElement.classList.toggle('dark');
-        };
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
 
-        init();
+        initPlayer();
     </script>
 </body>
 </html>
