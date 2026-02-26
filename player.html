@@ -25,7 +25,6 @@
             height: 100%;
         }
 
-        /* Protection Barrier: Blocks direct interaction with the Iframe */
         .protection-barrier {
             position: absolute;
             inset: 0;
@@ -61,7 +60,7 @@
             padding: 2.5rem 1.5rem 1.25rem;
             opacity: 0;
             transition: opacity 0.3s ease;
-            z-index: 30; /* Above the protection barrier */
+            z-index: 30;
         }
 
         .video-wrapper:hover .player-controls-overlay {
@@ -132,17 +131,13 @@
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+    <main id="player-content" class="max-w-7xl mx-auto px-4 md:px-6 py-8 hidden">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <!-- Content Column -->
             <div class="lg:col-span-2 space-y-6">
                 <div id="video-container" class="video-wrapper shadow-2xl border border-slate-200 dark:border-slate-800">
-                    
-                    <!-- 1. The Protection Barrier (Invisible div blocking clicks/right-clicks) -->
                     <div class="protection-barrier" id="click-shield"></div>
-
-                    <!-- 2. Watermark -->
                     <div class="watermark" id="player-watermark">
                         <div class="w-4 h-4 bg-emerald-600 rounded flex items-center justify-center">
                             <span class="text-white text-[8px] font-black">E</span>
@@ -150,10 +145,8 @@
                         <span class="text-white text-[10px] font-bold tracking-widest uppercase">Member Content</span>
                     </div>
                     
-                    <!-- 3. The Player -->
                     <div id="custom-player"></div>
 
-                    <!-- 4. Custom Controls UI -->
                     <div id="controls-ui" class="player-controls-overlay hidden">
                         <div class="progress-bar-container" id="progress-container">
                             <div id="progress-fill" class="progress-bar-fill"></div>
@@ -161,33 +154,25 @@
                         
                         <div class="flex items-center justify-between text-white">
                             <div class="flex items-center gap-4">
-                                <!-- Play/Pause -->
                                 <button id="play-pause-btn" class="hover:text-emerald-500 transition">
                                     <svg id="play-icon" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                     <svg id="pause-icon" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                                 </button>
-
-                                <!-- Volume -->
                                 <div class="flex items-center gap-2 group/vol">
                                     <button id="mute-btn" class="hover:text-emerald-500 transition">
                                         <svg id="vol-icon" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
                                     </button>
                                     <input type="range" id="volume-slider" min="0" max="100" value="100" class="w-0 group-hover/vol:w-20 transition-all accent-emerald-500 h-1">
                                 </div>
-
                                 <span id="time-display" class="text-xs font-mono opacity-80">0:00 / 0:00</span>
                             </div>
-
                             <div class="flex items-center gap-4">
-                                <!-- Speed -->
                                 <select id="speed-switcher" class="bg-transparent text-xs font-bold border-none focus:ring-0 cursor-pointer hover:text-emerald-500">
                                     <option value="0.5" class="bg-slate-900">0.5x</option>
                                     <option value="1" class="bg-slate-900" selected>1.0x</option>
                                     <option value="1.5" class="bg-slate-900">1.5x</option>
                                     <option value="2" class="bg-slate-900">2.0x</option>
                                 </select>
-
-                                <!-- Fullscreen -->
                                 <button id="fullscreen-btn" class="hover:text-emerald-500 transition">
                                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                                 </button>
@@ -205,7 +190,6 @@
                         <div class="flex-1">
                             <h2 id="lesson-title" class="text-2xl font-black mb-1">Lesson Title</h2>
                             <p id="course-title" class="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-4">Course Name</p>
-                            
                             <div id="resource-box" class="hidden flex items-center gap-3 mb-6">
                                 <a id="resource-link" href="#" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-600 transition border border-transparent hover:border-emerald-200">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -240,11 +224,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <!-- Load YouTube IFrame API -->
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
@@ -263,6 +245,7 @@
         function onYouTubeIframeAPIReady() {}
 
         async function init() {
+            // 1. Check Auth
             const { data: { user } } = await supabaseClient.auth.getUser();
             if (!user) {
                 window.location.href = 'index.html';
@@ -270,10 +253,14 @@
             }
             currentUser = user;
 
-            const watermarkText = document.querySelector('#player-watermark span');
-            watermarkText.textContent = `${user.email.split('@')[0]}`;
+            // 2. Validate Course Selection
+            if (!currentCourseId) {
+                window.location.href = 'dashboard.html';
+                return;
+            }
 
-            const { data: enrollment, error } = await supabaseClient
+            // 3. SECURE ENROLLMENT CHECK: Must be approved to view lessons
+            const { data: enrollment, error: enrollmentError } = await supabaseClient
                 .from('enrollments')
                 .select('status')
                 .eq('user_id', user.id)
@@ -281,11 +268,21 @@
                 .eq('status', 'approved')
                 .single();
 
-            if (error || !enrollment) {
-                window.location.href = 'dashboard.html';
+            if (enrollmentError || !enrollment) {
+                console.warn("Access Denied: Enrollment not approved.");
+                // Redirect back to the course details page if not approved
+                window.location.href = 'course.html';
                 return;
             }
 
+            // 4. Initialization successful, show content
+            document.getElementById('player-content').classList.remove('hidden');
+            
+            // Set Watermark
+            const watermarkText = document.querySelector('#player-watermark span');
+            watermarkText.textContent = `${user.email.split('@')[0]}`;
+
+            // Load Data
             loadCourseData();
             loadLessons();
             setupControls();
@@ -293,29 +290,22 @@
 
         function setupControls() {
             const playBtn = document.getElementById('play-pause-btn');
-            const playIcon = document.getElementById('play-icon');
-            const pauseIcon = document.getElementById('pause-icon');
             const volSlider = document.getElementById('volume-slider');
             const speedSwitcher = document.getElementById('speed-switcher');
             const fullscreenBtn = document.getElementById('fullscreen-btn');
             const container = document.getElementById('video-container');
             const clickShield = document.getElementById('click-shield');
 
-            // Play/Pause via Button
             playBtn.onclick = () => togglePlay();
-
-            // Toggle Play/Pause when clicking the shield (simulating native feel)
             clickShield.onclick = () => togglePlay();
-            
-            // Block right click on shield
             clickShield.oncontextmenu = (e) => e.preventDefault();
 
             volSlider.oninput = (e) => {
-                player.setVolume(e.target.value);
+                if(player && player.setVolume) player.setVolume(e.target.value);
             };
 
             speedSwitcher.onchange = (e) => {
-                player.setPlaybackRate(parseFloat(e.target.value));
+                if(player && player.setPlaybackRate) player.setPlaybackRate(parseFloat(e.target.value));
             };
 
             fullscreenBtn.onclick = () => {
@@ -327,6 +317,7 @@
             };
 
             document.getElementById('progress-container').onclick = (e) => {
+                if(!player) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const percentage = x / rect.width;
@@ -335,7 +326,7 @@
         }
 
         function togglePlay() {
-            if (!player) return;
+            if (!player || typeof player.getPlayerState !== 'function') return;
             const state = player.getPlayerState();
             if (state === YT.PlayerState.PLAYING) {
                 player.pauseVideo();
@@ -348,7 +339,7 @@
             if (player && player.getCurrentTime) {
                 const curr = player.getCurrentTime();
                 const total = player.getDuration();
-                const pct = (curr / total) * 100;
+                const pct = total > 0 ? (curr / total) * 100 : 0;
                 
                 document.getElementById('progress-fill').style.width = `${pct}%`;
                 document.getElementById('time-display').textContent = `${formatTime(curr)} / ${formatTime(total)}`;
@@ -356,7 +347,7 @@
         }
 
         function formatTime(seconds) {
-            if (isNaN(seconds)) return "0:00";
+            if (isNaN(seconds) || seconds < 0) return "0:00";
             const min = Math.floor(seconds / 60);
             const sec = Math.floor(seconds % 60);
             return `${min}:${sec.toString().padStart(2, '0')}`;
@@ -382,38 +373,41 @@
 
             const completedMap = new Set(progress?.filter(p => p.completed).map(p => p.lesson_id));
             
-            const pct = lessons.length > 0 ? Math.round((completedMap.size / lessons.length) * 100) : 0;
+            const pct = (lessons && lessons.length > 0) ? Math.round((completedMap.size / lessons.length) * 100) : 0;
             document.getElementById('sidebar-progress-bar').style.width = `${pct}%`;
             document.getElementById('sidebar-pct').textContent = `${pct}%`;
 
             const listContainer = document.getElementById('lesson-list');
-            listContainer.innerHTML = lessons.map((lesson, index) => {
-                const isActive = lesson.id === currentLessonId;
-                const isCompleted = completedMap.has(lesson.id);
-                const isVideo = lesson.lesson_type === 'video';
-                
-                return `
-                    <button onclick="changeLesson('${lesson.id}')" class="w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-100 dark:border-emerald-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}">
-                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}">
-                            ${isCompleted ? '✓' : index + 1}
-                        </div>
-                        <div class="text-left flex-1 min-w-0">
-                            <p class="text-sm font-bold truncate ${isActive ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-300'}">${lesson.title}</p>
-                            <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400">${lesson.duration || (isVideo ? 'Video' : 'Resource')}</p>
-                        </div>
-                    </button>
-                `;
-            }).join('');
+            if (lessons) {
+                listContainer.innerHTML = lessons.map((lesson, index) => {
+                    const isActive = lesson.id === currentLessonId;
+                    const isCompleted = completedMap.has(lesson.id);
+                    const typeLabel = lesson.lesson_type === 'video' ? 'Video' : 'Resource';
+                    
+                    return `
+                        <button onclick="changeLesson('${lesson.id}')" class="w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 border border-emerald-100 dark:border-emerald-500/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${isCompleted ? 'bg-emerald-600 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'}">
+                                ${isCompleted ? '✓' : index + 1}
+                            </div>
+                            <div class="text-left flex-1 min-w-0">
+                                <p class="text-sm font-bold truncate ${isActive ? 'text-emerald-600' : 'text-slate-700 dark:text-slate-300'}">${lesson.title}</p>
+                                <p class="text-[10px] uppercase tracking-wider font-bold text-slate-400">${lesson.duration || typeLabel}</p>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
 
-            if (currentLessonId) {
-                const activeLesson = lessons.find(l => l.id === currentLessonId);
-                renderPlayer(activeLesson, completedMap.has(currentLessonId));
+                if (currentLessonId) {
+                    const activeLesson = lessons.find(l => l.id === currentLessonId);
+                    if (activeLesson) renderPlayer(activeLesson, completedMap.has(currentLessonId));
+                } else if (lessons.length > 0) {
+                    // Default to first lesson if none selected
+                    changeLesson(lessons[0].id);
+                }
             }
         }
 
         function renderPlayer(lesson, isCompleted) {
-            if (!lesson) return;
-            
             document.getElementById('lesson-title').textContent = lesson.title;
             document.getElementById('lesson-description').textContent = lesson.description || 'No description provided.';
             document.getElementById('player-placeholder').classList.add('hidden');
@@ -454,11 +448,9 @@
                                 'autoplay': 1,
                                 'modestbranding': 1,
                                 'rel': 0,
-                                'showinfo': 0,
-                                'controls': 0, // HIDE YOUTUBE CONTROLS
-                                'iv_load_policy': 3,
+                                'controls': 0,
                                 'disablekb': 1,
-                                'fs': 0 // Disable native full screen button
+                                'fs': 0
                             },
                             events: {
                                 'onReady': () => {
@@ -500,33 +492,27 @@
                         <a href="${lesson.video_url}" target="_blank" class="px-6 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-black transition">Open Link</a>
                     </div>`;
             }
-
-            supabaseClient.from('user_progress').upsert({
-                user_id: currentUser.id,
-                lesson_id: lesson.id,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'user_id,lesson_id' });
         }
 
         async function markAsComplete(lessonId) {
             const btn = document.getElementById('mark-complete');
+            const originalText = btn.textContent;
             btn.textContent = 'Saving...';
+            btn.disabled = true;
+            
             await supabaseClient.from('user_progress').upsert({
-                    user_id: currentUser.id,
-                    lesson_id: lessonId,
-                    completed: true,
-                    updated_at: new Date().toISOString()
-                }, { onConflict: 'user_id,lesson_id' });
-            loadLessons();
+                user_id: currentUser.id,
+                lesson_id: lessonId,
+                completed: true,
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id,lesson_id' });
+            
+            await loadLessons();
         }
 
         async function changeLesson(id) {
             currentLessonId = id;
             sessionStorage.setItem('current_lesson_id', id);
-            const { data: lesson } = await supabaseClient.from('lessons').select('*').eq('id', id).single();
-            if (lesson && lesson.lesson_type !== 'video' && lesson.video_url) {
-                window.open(lesson.video_url, '_blank');
-            }
             loadLessons();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
