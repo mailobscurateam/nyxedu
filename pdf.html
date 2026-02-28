@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Student PDF Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        .pdf-container {
+            background-color: #525659;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .page-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            background: white;
+        }
+        canvas {
+            display: block;
+        }
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 50;
+        }
+        .file-card:hover {
+            transform: translateY(-2px);
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <!-- Sidebar / Header for Auth -->
+    <nav class="bg-white border-b p-4 sticky top-0 z-20">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h1 class="text-xl font-bold text-gray-800">Student PDF Library</h1>
+            <div class="flex items-center gap-3">
+                <input type="text" id="student-id" placeholder="Student ID (Optional)" class="p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500 outline-none w-48">
+                <button onclick="refreshFileList()" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-blue-700 transition">
+                    Refresh Files
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content: File List -->
+    <main id="setup-panel" class="max-w-6xl mx-auto p-6">
+        <div class="mb-6">
+            <h2 class="text-lg font-semibold text-gray-700">Available Documents</h2>
+            <p class="text-sm text-gray-500">Click a document to view it with your secure watermark.</p>
+        </div>
+
+        <div id="file-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Files will be injected here -->
+            <div class="col-span-full py-20 text-center text-gray-400">
+                Click "Refresh Files" to load documents from the 'pdf' bucket.
+            </div>
+        </div>
+    </main>
+
+    <!-- Viewer UI -->
+    <div id="viewer-panel" class="hidden fixed inset-0 z-30 bg-gray-900 overflow-y-auto">
+        <div class="sticky top-0 left-0 right-0 bg-white p-4 shadow-md z-40 flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="font-bold text-gray-800 truncate max-w-[200px] md:max-w-md" id="current-filename">Loading...</span>
+                <span class="text-xs text-blue-600 font-medium" id="watermark-info"></span>
+            </div>
+            <button onclick="closeViewer()" class="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-black transition text-sm font-medium">Close Viewer</button>
+        </div>
+        <div class="pdf-container" id="pdf-render-area">
+            <!-- Pages will be injected here -->
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+            <p class="mt-4 text-lg" id="loading-text">Communicating with Supabase...</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            SUPABASE_URL: 'https://acxndpvztflskdnkxekn.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeG5kcHZ6dGZsc2tkbmt4ZWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5OTk1MDUsImV4cCI6MjA4NzU3NTUwNX0.VXg94z121tZGbN4TAm0MwclBaqf1MVWp5cJiIncosv0',
+            DEFAULT_PHONE: '0712345678',
+            BUCKET_NAME: 'pdf' // The bucket we are targeting
+        };
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Auto-load on start
+        window.onload = refreshFileList;
+
+        /**
+         * List Files from 'pdf' bucket
+         */
+        async function refreshFileList() {
+            showLoading(true, "Listing PDF files...");
+            const grid = document.getElementById('file-grid');
+            
+            try {
+                // List objects in the bucket
+                const response = await fetch(`${CONFIG.SUPABASE_URL}/storage/v1/object/list/${CONFIG.BUCKET_NAME}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': CONFIG.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prefix: '',
+                        limit: 100,
+                        offset: 0,
+                        sortBy: { column: 'name', order: 'asc' }
+                    })
+                });
+
+                if (!response.ok) throw new Error("Could not list files. Check bucket permissions.");
+
+                const files = await response.json();
+                const pdfFiles = files.filter(f => f.name.toLowerCase().endsWith('.pdf'));
+
+                if (pdfFiles.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full py-20 text-center text-gray-500 italic">No PDF files found in '${CONFIG.BUCKET_NAME}' bucket.</div>`;
+                    return;
+                }
+
+                grid.innerHTML = pdfFiles.map(file => `
+                    <div class="file-card bg-white p-4 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition group" 
+                         onclick="openPdf('${file.name}')">
+                        <div class="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center group-hover:bg-blue-50 transition">
+                            <svg class="w-12 h-12 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                        </div>
+                        <h3 class="font-medium text-gray-800 truncate text-sm" title="${file.name}">${file.name}</h3>
+                        <p class="text-xs text-gray-400 mt-1">${(file.metadata.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-red-500">Error: ${err.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        /**
+         * Open specific PDF with Watermark
+         */
+        async function openPdf(fileName) {
+            const studentId = document.getElementById('student-id').value.trim();
+            document.getElementById('current-filename').innerText = fileName;
+            
+            showLoading(true, "Preparing secure document...");
+
+            try {
+                // 1. Get Watermark Text
+                let phoneNumber = CONFIG.DEFAULT_PHONE;
+                if (studentId) {
+                    phoneNumber = await fetchStudentPhone(studentId);
+                }
+
+                // 2. Download File
+                const downloadUrl = `${CONFIG.SUPABASE_URL}/storage/v1/object/authenticated/${CONFIG.BUCKET_NAME}/${fileName}`;
+                const response = await fetch(downloadUrl, {
+                    headers: {
+                        'apikey': CONFIG.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) throw new Error("Failed to download PDF.");
+
+                const blob = await response.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+
+                // 3. Render
+                await renderPdf(arrayBuffer, phoneNumber);
+
+                // UI Transitions
+                document.getElementById('watermark-info').innerText = `Licensed to: ${phoneNumber}`;
+                document.getElementById('viewer-panel').classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        /**
+         * DB: Fetch Student Phone
+         */
+        async function fetchStudentPhone(id) {
+            try {
+                const response = await fetch(`${CONFIG.SUPABASE_URL}/rest/v1/students?id=eq.${id}&select=phone`, {
+                    headers: {
+                        'apikey': CONFIG.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${CONFIG.SUPABASE_ANON_KEY}`
+                    }
+                });
+                if (!response.ok) return CONFIG.DEFAULT_PHONE;
+                const data = await response.json();
+                return (data && data.length > 0 && data[0].phone) ? data[0].phone : CONFIG.DEFAULT_PHONE;
+            } catch (e) {
+                return CONFIG.DEFAULT_PHONE;
+            }
+        }
+
+        /**
+         * Rendering Logic
+         */
+        async function renderPdf(data, watermarkText) {
+            const container = document.getElementById('pdf-render-area');
+            container.innerHTML = ''; 
+
+            const pdf = await pdfjsLib.getDocument({ data }).promise;
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 1.5 });
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'page-wrapper';
+                
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                wrapper.appendChild(canvas);
+                container.appendChild(wrapper);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                applyWatermark(canvas, watermarkText);
+            }
+        }
+
+        function applyWatermark(canvas, text) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.save();
+            ctx.font = "bold 35px Arial";
+            ctx.fillStyle = "rgba(150, 150, 150, 0.2)";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            ctx.translate(width / 2, height / 2);
+            ctx.rotate(-Math.PI / 4);
+
+            const stepX = 250;
+            const stepY = 150;
+
+            for (let x = -width; x < width; x += stepX) {
+                for (let y = -height; y < height; y += stepY) {
+                    ctx.fillText(text, x, y);
+                }
+            }
+
+            ctx.restore();
+        }
+
+        function showLoading(show, text = "") {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function closeViewer() {
+            document.getElementById('viewer-panel').classList.add('hidden');
+            document.body.style.overflow = ''; 
+        }
+    </script>
+</body>
+</html>
