@@ -99,7 +99,8 @@
             SUPABASE_URL: 'https://acxndpvztflskdnkxekn.supabase.co',
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjeG5kcHZ6dGZsc2tkbmt4ZWtuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5OTk1MDUsImV4cCI6MjA4NzU3NTUwNX0.VXg94z121tZGbN4TAm0MwclBaqf1MVWp5cJiIncosv0',
             DEFAULT_PHONE: '0712345678',
-            BUCKET_NAME: 'pdf' // The bucket we are targeting
+            BUCKET_NAME: 'pdf', // The bucket we are targeting
+            CACHE_KEY: 'student_cache'
         };
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -145,7 +146,7 @@
                     <div class="file-card bg-white p-4 rounded-xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition group" 
                          onclick="openPdf('${file.name}')">
                         <div class="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center group-hover:bg-blue-50 transition">
-                            <svg class="w-12 h-12 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                            <svg class="w-12 h-12 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
                         </div>
                         <h3 class="font-medium text-gray-800 truncate text-sm" title="${file.name}">${file.name}</h3>
                         <p class="text-xs text-gray-400 mt-1">${(file.metadata.size / 1024).toFixed(1)} KB</p>
@@ -169,10 +170,10 @@
             showLoading(true, "Preparing secure document...");
 
             try {
-                // 1. Get Watermark Text
+                // 1. Get Watermark Text (Try Cache first)
                 let phoneNumber = CONFIG.DEFAULT_PHONE;
                 if (studentId) {
-                    phoneNumber = await fetchStudentPhone(studentId);
+                    phoneNumber = await getStudentPhoneWithCache(studentId);
                 }
 
                 // 2. Download File
@@ -202,6 +203,28 @@
             } finally {
                 showLoading(false);
             }
+        }
+
+        /**
+         * Helper: Get Phone from Cache or Fetch from DB
+         */
+        async function getStudentPhoneWithCache(id) {
+            // Check localStorage cache
+            const cache = JSON.parse(localStorage.getItem(CONFIG.CACHE_KEY) || '{}');
+            
+            if (cache[id]) {
+                console.log("Serving phone number from cache for ID:", id);
+                return cache[id];
+            }
+
+            // Not in cache, fetch from DB
+            const phone = await fetchStudentPhone(id);
+            
+            // Save to cache (even if default, so we don't keep hitting DB for invalid IDs)
+            cache[id] = phone;
+            localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify(cache));
+            
+            return phone;
         }
 
         /**
