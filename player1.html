@@ -32,7 +32,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
         .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 1rem; }
-        .completed-lesson { opacity: 0.7; }
     </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
@@ -70,8 +69,8 @@
                 <div class="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
                     <div class="flex justify-between items-start mb-4">
                         <h2 id="active-lesson-title" class="text-2xl font-bold text-slate-900 dark:text-white">Lesson Loading...</h2>
-                        <button id="mark-complete" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-600 dark:text-slate-400 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                            Mark Complete
+                        <button id="mark-complete" class="px-5 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-600 dark:text-slate-400 rounded-xl text-sm font-bold transition-all flex items-center gap-2 disabled:opacity-50">
+                            <span id="btn-text">Mark Complete</span>
                         </button>
                     </div>
                     <p id="lesson-description" class="text-slate-600 dark:text-slate-400 leading-relaxed"></p>
@@ -86,9 +85,9 @@
                 <div class="mt-2 h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div id="progress-bar" class="h-full bg-emerald-500 w-0 transition-all duration-500"></div>
                 </div>
-                <div class="flex justify-between items-center mt-2">
+                <div class="flex justify-between mt-2">
                     <p id="progress-text" class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">0% COMPLETE</p>
-                    <p id="lesson-count" class="text-[10px] text-slate-500 font-medium">0/0 LESSONS</p>
+                    <p id="lesson-stats" class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">0/0 LESSONS</p>
                 </div>
             </div>
             
@@ -98,24 +97,23 @@
         </aside>
     </main>
 
-    <!-- Success Notification Toast -->
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl transform translate-y-24 opacity-0 transition-all duration-300 z-[100] flex items-center gap-3">
-        <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+    <!-- Toast UI -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 bg-slate-900 text-white rounded-2xl shadow-2xl transition-all duration-300 translate-y-20 opacity-0 z-[100] flex items-center gap-3">
+        <div id="toast-icon" class="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
         </div>
-        <span id="toast-message">Lesson completed!</span>
+        <span id="toast-message" class="text-sm font-medium">Progress updated!</span>
     </div>
 
     <script src="supabase.js"></script>
     <script>
-        // CONFIG is assumed to be in supabase.js
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
         
         const activeCourse = JSON.parse(localStorage.getItem('active_course') || '{}');
         let currentLessonId = sessionStorage.getItem('current_lesson_id');
         let lessonsData = [];
-        let completedLessonIds = new Set();
-        let currentUser = null;
+        let completedIds = new Set();
+        let userId = null;
 
         async function initPlayer() {
             if (!activeCourse.id) {
@@ -131,7 +129,7 @@
                     window.location.href = 'login.html';
                     return;
                 }
-                currentUser = user;
+                userId = user.id;
 
                 // 1. Fetch all lessons
                 const { data: lessons, error: lError } = await supabaseClient
@@ -143,18 +141,17 @@
                 if (lError) throw lError;
                 lessonsData = lessons;
 
-                // 2. Fetch user progress
+                // 2. Fetch completion data (Aligning with your table columns)
                 const { data: progress, error: pError } = await supabaseClient
                     .from('user_progress')
                     .select('lesson_id')
-                    .eq('user_id', user.id)
+                    .eq('user_id', userId)
                     .eq('course_id', activeCourse.id)
-                    .eq('is_completed', true);
+                    .eq('completed', true);
 
                 if (pError) throw pError;
-                completedLessonIds = new Set(progress.map(p => p.lesson_id));
+                completedIds = new Set(progress.map(p => p.lesson_id));
 
-                // 3. Set default lesson
                 if (!currentLessonId && lessons.length > 0) {
                     currentLessonId = lessons[0].id;
                 }
@@ -165,7 +162,7 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('media-container').innerHTML = `<p class="text-white p-4">Error loading course data: ${err.message}</p>`;
+                document.getElementById('media-container').innerHTML = `<p class="text-white p-4">Error loading data.</p>`;
             }
         }
 
@@ -173,20 +170,18 @@
             const playlistEl = document.getElementById('playlist');
             playlistEl.innerHTML = lessonsData.map((lesson, idx) => {
                 const isActive = lesson.id === currentLessonId;
-                const isCompleted = completedLessonIds.has(lesson.id);
-                
+                const isDone = completedIds.has(lesson.id);
                 return `
                 <div onclick="loadLesson('${lesson.id}')" 
-                     class="group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-100 dark:ring-emerald-800/50' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}">
-                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                        ${isCompleted ? 'bg-emerald-500 text-white' : (isActive ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}">
-                        ${isCompleted ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : idx + 1}
+                     class="group flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}">
+                    <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isDone ? 'bg-emerald-500 text-white' : (isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-500')}">
+                        ${isDone ? '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : idx + 1}
                     </div>
                     <div class="flex-grow min-w-0">
                         <h4 class="text-xs font-bold ${isActive ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'} truncate">${lesson.title}</h4>
                         <p class="text-[10px] text-slate-500">${lesson.duration || '5:00'}</p>
                     </div>
-                    ${isActive ? '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>' : ''}
+                    ${isActive ? '<div class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>' : ''}
                 </div>`;
             }).join('');
         }
@@ -198,85 +193,73 @@
             currentLessonId = lessonId;
             sessionStorage.setItem('current_lesson_id', lessonId);
             
-            // Update Text UI
             document.getElementById('header-lesson-title').textContent = `Now Playing: ${lesson.title}`;
             document.getElementById('active-lesson-title').textContent = lesson.title;
-            document.getElementById('lesson-description').textContent = lesson.description || 'No description provided for this lesson.';
+            document.getElementById('lesson-description').textContent = lesson.description || 'No description provided.';
             
-            // Update Completion Button State
             const btn = document.getElementById('mark-complete');
-            if (completedLessonIds.has(lessonId)) {
-                btn.textContent = 'Completed';
-                btn.classList.add('bg-emerald-600', 'text-white');
-                btn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-400');
+            const btnText = document.getElementById('btn-text');
+            
+            if (completedIds.has(lessonId)) {
+                btnText.textContent = 'Completed';
+                btn.classList.replace('bg-slate-100', 'bg-emerald-600');
+                btn.classList.replace('text-slate-600', 'text-white');
+                btn.classList.add('dark:bg-emerald-600');
             } else {
-                btn.textContent = 'Mark Complete';
-                btn.classList.remove('bg-emerald-600', 'text-white');
-                btn.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-600', 'dark:text-slate-400');
+                btnText.textContent = 'Mark Complete';
+                btn.classList.replace('bg-emerald-600', 'bg-slate-100');
+                btn.classList.replace('text-white', 'text-slate-600');
+                btn.classList.remove('dark:bg-emerald-600');
             }
 
             const mediaContainer = document.getElementById('media-container');
-            
             if (lesson.lesson_type === 'video') {
                 const videoId = extractYouTubeId(lesson.video_url);
                 if (videoId) {
-                    mediaContainer.innerHTML = `
-                        <div class="video-container w-full h-full">
-                            <iframe src="https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-                        </div>`;
+                    mediaContainer.innerHTML = `<div class="video-container w-full h-full"><iframe src="https://www.youtube.com/embed/${videoId}?rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>`;
                 } else {
                     mediaContainer.innerHTML = `<video controls class="w-full h-full bg-black"><source src="${lesson.video_url}" type="video/mp4"></video>`;
                 }
             } else {
-                mediaContainer.innerHTML = `
-                    <div class="bg-white dark:bg-slate-800 w-full h-full flex flex-col items-center justify-center p-8 text-center">
-                        <div class="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-3xl flex items-center justify-center text-emerald-600 mb-4">
-                             <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Reading Material</h3>
-                        <p class="text-slate-500 mb-6">This lesson contains document-based content.</p>
-                        <a href="${lesson.video_url}" target="_blank" class="px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20">Open Document</a>
-                    </div>`;
+                mediaContainer.innerHTML = `<div class="bg-white dark:bg-slate-800 w-full h-full flex flex-col items-center justify-center p-8 text-center"><div class="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center text-emerald-600 mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div><h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1">Reading Lesson</h3><p class="text-slate-500 text-sm mb-6">Open the document to start learning.</p><a href="${lesson.video_url}" target="_blank" class="px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20">Open Document</a></div>`;
             }
-
             renderPlaylist();
         }
 
-        async function handleMarkComplete() {
-            if (!currentUser || !currentLessonId) return;
+        async function toggleCompletion() {
+            if (!userId || !currentLessonId) return;
             
             const btn = document.getElementById('mark-complete');
-            const originalText = btn.textContent;
+            const btnText = document.getElementById('btn-text');
+            const isMarkingComplete = !completedIds.has(currentLessonId);
+            
             btn.disabled = true;
-            btn.textContent = 'Saving...';
+            btnText.textContent = 'Saving...';
 
             try {
-                // Upsert progress into user_progress table
+                // Using exact column names from your screenshot: user_id, lesson_id, course_id, completed, updated_at
                 const { error } = await supabaseClient
                     .from('user_progress')
                     .upsert({
-                        user_id: currentUser.id,
-                        course_id: activeCourse.id,
+                        user_id: userId,
                         lesson_id: currentLessonId,
-                        is_completed: true,
-                        last_watched_at: new Date().toISOString()
+                        course_id: activeCourse.id,
+                        completed: isMarkingComplete,
+                        updated_at: new Date().toISOString()
                     }, { onConflict: 'user_id,lesson_id' });
 
                 if (error) throw error;
 
-                // Update local state
-                completedLessonIds.add(currentLessonId);
-                
-                // Show Feedback
-                showToast("Lesson marked as complete!");
-                loadLesson(currentLessonId); // Refresh button UI
+                if (isMarkingComplete) completedIds.add(currentLessonId);
+                else completedIds.delete(currentLessonId);
+
+                showToast(isMarkingComplete ? "Lesson completed!" : "Lesson status reset.");
+                loadLesson(currentLessonId);
                 updateProgressUI();
-                renderPlaylist();
 
             } catch (err) {
-                console.error("Error saving progress:", err);
-                showToast("Failed to save progress", true);
-                btn.textContent = originalText;
+                console.error(err);
+                showToast("Connection error. Try again.", true);
             } finally {
                 btn.disabled = false;
             }
@@ -284,34 +267,23 @@
 
         function updateProgressUI() {
             if (lessonsData.length === 0) return;
-            
-            const total = lessonsData.length;
-            const completed = completedLessonIds.size;
-            const percentage = Math.round((completed / total) * 100);
-            
-            document.getElementById('progress-bar').style.width = `${percentage}%`;
-            document.getElementById('progress-text').textContent = `${percentage}% COMPLETE`;
-            document.getElementById('lesson-count').textContent = `${completed}/${total} LESSONS`;
+            const pct = Math.round((completedIds.size / lessonsData.length) * 100);
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+            document.getElementById('progress-text').textContent = `${pct}% COMPLETE`;
+            document.getElementById('lesson-stats').textContent = `${completedIds.size}/${lessonsData.length} LESSONS`;
         }
 
-        function showToast(message, isError = false) {
-            const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-message');
-            msgEl.textContent = message;
-            
-            toast.classList.remove('translate-y-24', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-24', 'opacity-0');
-                toast.classList.remove('translate-y-0', 'opacity-100');
-            }, 3000);
+        function showToast(msg, error = false) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            document.getElementById('toast-icon').className = `w-5 h-5 rounded-full flex items-center justify-center ${error ? 'bg-red-500' : 'bg-emerald-500'}`;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
 
         function extractYouTubeId(url) {
             if (!url) return null;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
+            const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
             return (match && match[2].length === 11) ? match[2] : null;
         }
 
@@ -320,7 +292,7 @@
             localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
         });
 
-        document.getElementById('mark-complete').addEventListener('click', handleMarkComplete);
+        document.getElementById('mark-complete').addEventListener('click', toggleCompletion);
 
         initPlayer();
     </script>
